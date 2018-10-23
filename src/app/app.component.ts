@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { Board, BOARD_SPECS, BoardShape } from './board/board';
+import { RandomStrategy } from './board/strategy/random-strategy';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +8,10 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'settlers-setup';
+  board: Board;
+
+  constructor() {
+    const strategy = new RandomStrategy();
+    this.board = strategy.generateBoard(BOARD_SPECS[BoardShape.STANDARD]);
+  }
 }

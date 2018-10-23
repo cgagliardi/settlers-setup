@@ -57,15 +57,25 @@ export enum ResourceType {
 export type BoardHexes = Array<Array<Hex|undefined>>;
 export type BoardCorners = Array<Array<Corner|undefined>>;
 
+export interface Dimensions {
+  width: number;
+  height: number;
+}
+
 export interface BoardSpec {
   // A human readable name for this board layout.
   readonly label: string;
+  // The maximum width and height of the board. Where width and height are defined by a single hex
+  // being size 1. This translates to:
+  // { height: hexes.length, width: (maxHexesCol.length+1)/2}
+  readonly dimensions: Dimensions;
   // Returns a queue of resources where resources.length equals the number of !undefined values in
   // hexes.
   readonly resources: () => RandomQueue<ResourceType>;
+  // Passed in the value of BoardSpec.dimensions.
   // Returns a 2d array where populated columns alternate between each row as described by the board
   // layout examples in the top of this file.
-  readonly hexes: () => BoardHexes;
+  readonly hexes: (board: Board) => BoardHexes;
 }
 
 export enum BoardShape {
@@ -76,6 +86,7 @@ export enum BoardShape {
 export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
   [BoardShape.STANDARD]: {
     label: BoardShape.STANDARD,
+    dimensions: {width: 5, height: 5},
     resources: () => RandomQueue.createByCounts(
         [ResourceType.BRICK, 3],
         [ResourceType.DESERT, 1],
@@ -84,10 +95,11 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
         [ResourceType.WOOD, 4],
         [ResourceType.WHEAT, 4],
     ),
-    hexes: () => generateStandardShapedBoard({width: 5, height: 5}),
+    hexes: (board) => generateStandardShapedBoard(board),
   },
   [BoardShape.EXPANSION6]: {
     label: BoardShape.EXPANSION6,
+    dimensions: {width: 6, height: 7},
     resources: () => RandomQueue.createByCounts(
         [ResourceType.BRICK, 5],
         [ResourceType.DESERT, 2],
@@ -96,7 +108,7 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
         [ResourceType.WOOD, 6],
         [ResourceType.WHEAT, 6],
     ),
-    hexes: () => generateStandardShapedBoard({width: 6, height: 7}),
+    hexes: (board) => generateStandardShapedBoard(board),
   }
 };
 
@@ -187,6 +199,8 @@ export class Hex {
 
 export class Board {
   readonly label: string;
+  // So the BoardSpec for a description of what this value actually means.
+  readonly dimensions: Dimensions;
   // Hexes represents all of the resource hexes on the board, where the indexes
   // are what's documented in the Default Board Layout at the top of this file.
   readonly hexes: BoardHexes;
@@ -197,7 +211,8 @@ export class Board {
 
   constructor(spec: BoardSpec) {
     this.label = spec.label;
-    this.hexes = spec.hexes();
+    this.dimensions = spec.dimensions;
+    this.hexes = spec.hexes(this);
     this.remainingResources = spec.resources();
     this.corners = this.generateCorners();
   }
@@ -261,19 +276,21 @@ export class Board {
  * While this function is helpful for the standard and 5-6 expansion boards, it will not be useful
  * for something like a seafarers board.
  */
-function generateStandardShapedBoard(dims: {width: number, height: number}) {
-  const hexes = new Array(dims.height);
-  const middleRow = (dims.height - 1) / 5;
-  for (let r = 0; r < this.size; r++) {
+function generateStandardShapedBoard(board: Board) {
+  const hexes = new Array(board.dimensions.height);
+  const middleRow = (board.dimensions.height - 1) / 2;
+  for (let r = 0; r < board.dimensions.height; r++) {
     // Columns alternate in the array every other index.
     // See Default Board Layout at the top of this file.
     const distFromMiddle = Math.abs(r - middleRow);
-    const hexesInRow = dims.width - distFromMiddle;
+    const hexesInRow = board.dimensions.width - distFromMiddle;
     const startIndex = distFromMiddle;
     const maxCols = startIndex + hexesInRow * 2;
     hexes[r] = new Array(maxCols);
     for (let c = startIndex; c < maxCols; c++) {
-      hexes[r][c] = new Hex(c, r, this);
+      if ((startIndex - c) % 2 === 0) {
+        hexes[r][c] = new Hex(c, r, board);
+      }
     }
   }
   return hexes;

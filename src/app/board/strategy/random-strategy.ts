@@ -1,7 +1,7 @@
 import { BoardSpec, Board } from '../board';
 import { Strategy } from './strategy';
 
-class RandomStrategy implements Strategy {
+export class RandomStrategy implements Strategy {
   getName() {
     return 'Random';
   }
