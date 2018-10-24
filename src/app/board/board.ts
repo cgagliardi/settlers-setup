@@ -54,12 +54,31 @@ export enum ResourceType {
   WHEAT,
 }
 
-export type BoardHexes = Array<Array<Hex|undefined>>;
-export type BoardCorners = Array<Array<Corner|undefined>>;
+export type HexGrid = Array<Array<Hex|undefined>>;
+export type CornerGrid = Array<Array<Corner|undefined>>;
 
 export interface Dimensions {
-  width: number;
-  height: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface Coordinate {
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface Port {
+  // The default resource at that port.
+  resource: ResourceType;
+  readonly corners: [Coordinate, Coordinate];
+}
+
+export interface Beach {
+  // if down faces the island.
+  connections: [number, number];
+  // Start and end board corner coordinates.
+  corners: [Coordinate, Coordinate];
+  ports: Port[];
 }
 
 export interface BoardSpec {
@@ -75,7 +94,8 @@ export interface BoardSpec {
   // Passed in the value of BoardSpec.dimensions.
   // Returns a 2d array where populated columns alternate between each row as described by the board
   // layout examples in the top of this file.
-  readonly hexes: (board: Board) => BoardHexes;
+  readonly hexes: (board: Board) => HexGrid;
+  readonly beaches: () => Beach[];
 }
 
 export enum BoardShape {
@@ -96,6 +116,7 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
         [ResourceType.WHEAT, 4],
     ),
     hexes: (board) => generateStandardShapedBoard(board),
+    beaches: () => [],
   },
   [BoardShape.EXPANSION6]: {
     label: BoardShape.EXPANSION6,
@@ -109,6 +130,7 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
         [ResourceType.WHEAT, 6],
     ),
     hexes: (board) => generateStandardShapedBoard(board),
+    beaches: () => [],
   }
 };
 
@@ -203,8 +225,8 @@ export class Board {
   readonly dimensions: Dimensions;
   // Hexes represents all of the resource hexes on the board, where the indexes
   // are what's documented in the Default Board Layout at the top of this file.
-  readonly hexes: BoardHexes;
-  readonly corners: BoardCorners;
+  readonly hexGrid: HexGrid;
+  readonly cornerGrid: CornerGrid;
   readonly remainingResources:  RandomQueue<ResourceType>;
   // Cached value for getAllHexes.
   private flatHexes: Hex[];
@@ -212,15 +234,15 @@ export class Board {
   constructor(spec: BoardSpec) {
     this.label = spec.label;
     this.dimensions = spec.dimensions;
-    this.hexes = spec.hexes(this);
+    this.hexGrid = spec.hexes(this);
     this.remainingResources = spec.resources();
-    this.corners = this.generateCorners();
+    this.cornerGrid = this.generateCornerGrid();
   }
 
-  private generateCorners(): BoardCorners {
-    const corners = new Array<Array<Corner|undefined>>(this.hexes.length + 1);
+  private generateCornerGrid(): CornerGrid {
+    const corners = new Array<Array<Corner|undefined>>(this.hexGrid.length + 1);
 
-    for (let r = 0; r < this.hexes.length; r++) {
+    for (let r = 0; r < this.hexGrid.length; r++) {
       const [row1, row2] = this.getHexRowsForCornerRow(r);
       const numHexCols = row2 ? Math.max(row1.length, row2.length) : row1.length;
       const rowLen = numHexCols + 2;
@@ -234,13 +256,13 @@ export class Board {
     return corners;
   }
 
-  getAllHexes(): ReadonlyArray<Hex> {
+  get hexes(): ReadonlyArray<Hex> {
     if (!this.flatHexes) {
       this.flatHexes = [];
-      for (let r = 0; r < this.hexes.length; r++) {
-        for (let c = 0; c < this.hexes[r].length; c++) {
-          if (this.hexes[r][c]) {
-            this.flatHexes.push(this.hexes[r][c]);
+      for (let r = 0; r < this.hexGrid.length; r++) {
+        for (let c = 0; c < this.hexGrid[r].length; c++) {
+          if (this.hexGrid[r][c]) {
+            this.flatHexes.push(this.hexGrid[r][c]);
           }
         }
       }
@@ -249,24 +271,24 @@ export class Board {
   }
 
   getHex(c: number, r: number): Hex|undefined {
-    return getFrom2dArray(this.hexes, c, r);
+    return getFrom2dArray(this.hexGrid, c, r);
   }
 
   getCorner(c: number, r: number): Corner|undefined {
-    return getFrom2dArray(this.corners, c, r);
+    return getFrom2dArray(this.cornerGrid, c, r);
   }
 
   /**
-   * @param r An index in this.corners.
-   * @returns The rows in hexes that are associated with the given row in this.corners[r].
+   * @param r An index in this.cornerGrid.
+   * @returns The rows in hexes that are associated with the given row in this.cornerGrid[r].
    */
-  private getHexRowsForCornerRow(r: number): BoardHexes {
+  private getHexRowsForCornerRow(r: number): HexGrid {
     if (r === 0) {
-      return [this.hexes[0]];
-    } else if (r === this.hexes.length) {
-      return [this.hexes[this.hexes.length - 1]];
+      return [this.hexGrid[0]];
+    } else if (r === this.hexGrid.length) {
+      return [this.hexGrid[this.hexGrid.length - 1]];
     } else {
-      return [this.hexes[r - 1], this.hexes[r]];
+      return [this.hexGrid[r - 1], this.hexGrid[r]];
     }
   }
 }

@@ -53,7 +53,7 @@ export class CatanBoardComponent implements OnInit {
     const dims = this.board.dimensions;
     this.draw = SVG(this.container.nativeElement)
         .size(dims.width * HEX_DIMS.width, dims.height * HEX_DIMS.height + HEX_DIMS.height);
-    for (const boardHex of this.board.getAllHexes()) {
+    for (const boardHex of this.board.hexes) {
       const hexPolygon = this.draw.polygon([
         0, HEX_CORNER_HEIGHT, // NW
         HEX_DIMS.width / 2, 0, // N
