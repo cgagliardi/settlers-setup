@@ -20,23 +20,22 @@ function getCornerRenderCoords(corner: Corner): Coordinate {
   };
 }
 
-/**
- * Colors from https://clrs.cc/
- */
 function getColor(resource: ResourceType): string {
+  // Material design colors.
+  // See https://material.io/design/color/the-color-system.html
   switch (resource) {
     case ResourceType.BRICK:
-      return '#FF4136';
+      return '#D84315';
     case ResourceType.DESERT:
-      return '#FF851B';
+      return '#EF6C00';
     case ResourceType.ORE:
-      return '#AAAAAA';
+      return '#B0BEC5';
     case ResourceType.SHEEP:
-      return '#01FF70';
+      return '#B2FF59';
     case ResourceType.WHEAT:
-      return '#FFDC00';
+      return '#FFEE58';
     case ResourceType.WOOD:
-      return '#3D9970';
+      return '#33691E';
   }
   return 'black';
 }
