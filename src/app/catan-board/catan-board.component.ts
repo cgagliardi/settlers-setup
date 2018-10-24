@@ -25,9 +25,9 @@ function getColor(resource: ResourceType): string {
   // See https://material.io/design/color/the-color-system.html
   switch (resource) {
     case ResourceType.BRICK:
-      return '#D84315';
+      return '#C62828';
     case ResourceType.DESERT:
-      return '#EF6C00';
+      return '#795548';
     case ResourceType.ORE:
       return '#B0BEC5';
     case ResourceType.SHEEP:
