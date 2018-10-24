@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { Board, BOARD_SPECS, BoardShape } from './board/board';
+import { Board } from './board/board';
+import { BOARD_SPECS, BoardShape } from './board/board-specs';
 import { RandomStrategy } from './board/strategy/random-strategy';
 
 @Component({

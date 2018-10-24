@@ -1,4 +1,4 @@
-import { BoardSpec, Board } from '../board';
+import { Board, BoardSpec } from '../board';
 
 /**
  * A strategy for creating a catan board.

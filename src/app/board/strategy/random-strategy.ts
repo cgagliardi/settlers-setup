@@ -1,4 +1,4 @@
-import { BoardSpec, Board } from '../board';
+import { Board, BoardSpec } from '../board';
 import { Strategy } from './strategy';
 
 export class RandomStrategy implements Strategy {
