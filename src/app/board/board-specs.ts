@@ -26,7 +26,16 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
     beaches: () => [
       {
         connections: [6, 1],
-        corners: [{x: 2, y: 0}, {x: 8, y: 0}],
+        // TODO - If I can figure out how to walk around the perimeter of the board, I should be
+        // able to automate this list with just start and end points.
+        corners: [
+          {x: 2, y: 0},
+          {x: 3, y: 0},
+          {x: 4, y: 0},
+          {x: 5, y: 0},
+          {x: 6, y: 0},
+          {x: 7, y: 0},
+        ],
         ports: [{
           resource: ResourceType.ANY,
           corners: [{x: 2, y: 0}, {x: 3, y: 0}],
@@ -37,7 +46,14 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
       },
       {
         connections: [1, 2],
-        corners: [{x: 8, y: 0}, {x: 10, y: 2}],
+        corners: [
+          {x: 7, y: 0},
+          {x: 8, y: 0},
+          {x: 8, y: 1},
+          {x: 9, y: 1},
+          {x: 9, y: 2},
+          {x: 10, y: 2},
+        ],
         ports: [{
           resource: ResourceType.ANY,
           corners: [{x: 8, y: 1}, {x: 9, y: 1}],
@@ -45,7 +61,14 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
       },
       {
         connections: [2, 3],
-        corners: [{x: 10, y: 2}, {x: 8, y: 5}],
+        corners: [
+          {x: 10, y: 2},
+          {x: 10, y: 3},
+          {x: 9, y: 3},
+          {x: 9, y: 4},
+          {x: 8, y: 4},
+          {x: 8, y: 5}
+        ],
         ports: [{
           resource: ResourceType.ANY,
           corners: [{x: 10, y: 2}, {x: 10, y: 3}],
@@ -56,7 +79,14 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
       },
       {
         connections: [3, 4],
-        corners: [{x: 8, y: 5}, {x: 3, y: 5}],
+        corners: [
+          {x: 8, y: 5},
+          {x: 7, y: 5},
+          {x: 6, y: 5},
+          {x: 5, y: 5},
+          {x: 4, y: 5},
+          {x: 3, y: 5},
+        ],
         ports: [{
           resource: ResourceType.WOOD,
           corners: [{x: 5, y: 5}, {x: 6, y: 5}],
@@ -64,7 +94,13 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
       },
       {
         connections: [4, 5],
-        corners: [{x: 3, y: 5}, {x: 0, y: 3}],
+        corners: [
+          {x: 3, y: 5},
+          {x: 2, y: 4},
+          {x: 1, y: 4},
+          {x: 1, y: 3},
+          {x: 0, y: 3},
+        ],
         ports: [{
           resource: ResourceType.ANY,
           corners: [{x: 3, y: 5}, {x: 2, y: 5}],
@@ -75,7 +111,14 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
       },
       {
         connections: [5, 6],
-        corners: [{x: 0, y: 3}, {x: 2, y: 0}],
+        corners: [
+          {x: 0, y: 3},
+          {x: 0, y: 2},
+          {x: 1, y: 2},
+          {x: 1, y: 1},
+          {x: 2, y: 1},
+          {x: 2, y: 0},
+        ],
         ports: [{
           resource: ResourceType.ORE,
           corners: [{x: 1, y: 1}, {x: 1, y: 2}],

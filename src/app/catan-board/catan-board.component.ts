@@ -1,22 +1,27 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
-import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate } from '../board/board';
+import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach } from '../board/board';
 import * as SVG from 'svg.js';
 
 // Stands for grid size. This is also the length of a hex size.
 const HEX_SIDE_HEIGHT = 50;
 
-const HEX_CORNER_HEIGHT = HEX_SIDE_HEIGHT * .333;
+// In order to render a hexegon where every side is the same, we need to figure out the height of
+// the angled lines where the hypotenuse is HEX_SIDE_HEIGHT. An even sided hexagon has 120 degree
+// angles all over, so we use 60 degrees to represent the right triangle that is one of our slanted
+// lines.
+const RAD_60_DEG = 60 * Math.PI / 180; // 60 degrees in Radians
+const HEX_CORNER_HEIGHT = HEX_SIDE_HEIGHT * Math.cos(RAD_60_DEG);
 const HEX_DIMS = {
-  width: HEX_SIDE_HEIGHT * 1.3,
+  width: HEX_SIDE_HEIGHT * Math.sin(RAD_60_DEG) * 2,
   height: HEX_CORNER_HEIGHT * 2 + HEX_SIDE_HEIGHT
 };
 const BOARD_OFFSET = { x: 50, y: 50 };
 
-function getCornerRenderCoords(corner: Corner): Coordinate {
+function getCornerRenderCoords(corner: Coordinate): Coordinate {
   const xFactor = (corner.x + corner.y) % 2 ? 0 : HEX_CORNER_HEIGHT;
   return {
-    x: corner.x * HEX_DIMS.width / 2,
-    y: corner.y * (HEX_SIDE_HEIGHT + HEX_CORNER_HEIGHT) + xFactor,
+    x: corner.x * HEX_DIMS.width / 2 + BOARD_OFFSET.x,
+    y: corner.y * (HEX_SIDE_HEIGHT + HEX_CORNER_HEIGHT) + xFactor + BOARD_OFFSET.y,
   };
 }
 
@@ -63,6 +68,10 @@ export class CatanBoardComponent implements OnInit {
         .size(dims.width * HEX_DIMS.width + BOARD_OFFSET.x * 2,
               dims.height * HEX_DIMS.height + HEX_DIMS.height + BOARD_OFFSET.y * 2);
 
+    for (const beach of this.board.beaches) {
+      this.renderBeach(beach);
+    }
+
     for (const hex of this.board.hexes) {
       this.renderHex(hex);
     }
@@ -90,7 +99,13 @@ export class CatanBoardComponent implements OnInit {
     const coords = getCornerRenderCoords(corner);
     return this.draw.circle(10)
         .fill('black')
-        .attr({ cx: coords.x + BOARD_OFFSET.x, cy: coords.y + BOARD_OFFSET.y })
+        .attr({ cx: coords.x, cy: coords.y})
         .click(() => console.log(corner));
+  }
+
+  private renderBeach(beach: Beach) {
+    // Start with the points along hte board.
+    const points = beach.corners.map(getCornerRenderCoords).map(c => [c.x, c.y]);
+    this.draw.polygon(points).fill('#64B5F6');
   }
 }

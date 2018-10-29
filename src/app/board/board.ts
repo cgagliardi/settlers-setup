@@ -53,8 +53,9 @@ export interface Beach {
   // The connection numbers that appear on the sides of the beach piece. In order from left-to-right
   // if down is the beach. The first number is the female connector.
   connections: [number, number];
-  // Start and end board corner coordinates.
-  corners: [Coordinate, Coordinate];
+  // Coordinates of every corner the beach touches where the first entry corresponds to
+  // connections[0] and vice-versa.
+  corners: Coordinate[];
   ports: Port[];
 }
 
