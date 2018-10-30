@@ -25,7 +25,9 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/paper/dist/paper-full.min.js"
+            ]
           },
           "configurations": {
             "production": {

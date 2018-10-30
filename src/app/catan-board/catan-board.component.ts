@@ -1,6 +1,8 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach } from '../board/board';
-import * as SVG from 'svg.js';
+import { PaperScope, Project, Path, Point } from 'paper';
+import { assert } from '../assert';
+
 
 // Stands for grid size. This is also the length of a hex size.
 const HEX_SIDE_HEIGHT = 50;
@@ -17,12 +19,20 @@ const HEX_DIMS = {
 };
 const BOARD_OFFSET = { x: 50, y: 50 };
 
-function getCornerRenderCoords(corner: Coordinate): Coordinate {
+function getCornerPoint(corner: Coordinate): Point {
   const xFactor = (corner.x + corner.y) % 2 ? 0 : HEX_CORNER_HEIGHT;
-  return {
-    x: corner.x * HEX_DIMS.width / 2 + BOARD_OFFSET.x,
-    y: corner.y * (HEX_SIDE_HEIGHT + HEX_CORNER_HEIGHT) + xFactor + BOARD_OFFSET.y,
-  };
+  return new Point(
+      corner.x * HEX_DIMS.width / 2 + BOARD_OFFSET.x,
+      corner.y * (HEX_SIDE_HEIGHT + HEX_CORNER_HEIGHT) + xFactor + BOARD_OFFSET.y);
+}
+
+function toPoints(arr: number[]): Point[] {
+  assert(arr.length % 2 === 0);
+  const points = new Array(arr.length / 2);
+  for (let i = 0; i < arr.length; i++) {
+    points[i / 2] = new Point(arr[i], arr[i + 1]);
+  }
+  return points;
 }
 
 function getColor(resource: ResourceType): string {
@@ -53,20 +63,20 @@ function getColor(resource: ResourceType): string {
 })
 export class CatanBoardComponent implements OnInit {
   @Input() board: Board;
-  @ViewChild('container') container;
-  draw: SVG.Doc;
+  @ViewChild('canvas') canvas;
+  scope: PaperScope;
+  project: Project;
 
   constructor() { }
 
   ngOnInit() {
-    if (!SVG.supported) {
-      alert('Sorry, your browser is too old for this.');
-      return;
-    }
     const dims = this.board.dimensions;
-    this.draw = SVG(this.container.nativeElement)
-        .size(dims.width * HEX_DIMS.width + BOARD_OFFSET.x * 2,
-              dims.height * HEX_DIMS.height + HEX_DIMS.height + BOARD_OFFSET.y * 2);
+    const canvasEl = this.canvas.nativeElement;
+    canvasEl.width = dims.width * HEX_DIMS.width + BOARD_OFFSET.x * 2;
+    canvasEl.height = dims.height * HEX_DIMS.height + HEX_DIMS.height + BOARD_OFFSET.y * 2;
+
+    this.scope = new PaperScope();
+    this.project = new Project(canvasEl);
 
     for (const beach of this.board.beaches) {
       this.renderBeach(beach);
@@ -81,31 +91,36 @@ export class CatanBoardComponent implements OnInit {
     }
   }
 
-  private renderHex(hex: Hex): SVG.Polygon {
-    return this.draw.polygon([
-      0, HEX_CORNER_HEIGHT, // NW
-      HEX_DIMS.width / 2, 0, // N
-      HEX_DIMS.width, HEX_CORNER_HEIGHT,  /// NE
-      HEX_DIMS.width, HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT,  // SE
-      HEX_DIMS.width / 2, HEX_DIMS.height,  // S
-      0, HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT,  // SW
-      ]).fill(getColor(hex.resource))
-        .stroke({ color: 'black', width: 1 })
-        .move(HEX_DIMS.width / 2 * hex.x + BOARD_OFFSET.x,
-              (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * hex.y + BOARD_OFFSET.y);
+  private renderHex(hex: Hex): Path {
+    const path = new Path(toPoints([
+        0, HEX_CORNER_HEIGHT, // NW
+        HEX_DIMS.width / 2, 0, // N
+        HEX_DIMS.width, HEX_CORNER_HEIGHT,  /// NE
+        HEX_DIMS.width, HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT,  // SE
+        HEX_DIMS.width / 2, HEX_DIMS.height,  // S
+        0, HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT,  // SW
+        0, HEX_CORNER_HEIGHT, // NW
+    ]));
+    path.fillColor = getColor(hex.resource);
+    path.strokeColor = 'black';
+    path.strokeWidth = 1;
+    path.position = new Point(
+      HEX_DIMS.width / 2 * hex.x + BOARD_OFFSET.x + HEX_DIMS.width / 2,
+      (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * hex.y + BOARD_OFFSET.y + HEX_DIMS.height / 2);
+    return path;
   }
 
-  private renderCorner(corner: Corner): SVG.Circle {
-    const coords = getCornerRenderCoords(corner);
-    return this.draw.circle(10)
-        .fill('black')
-        .attr({ cx: coords.x, cy: coords.y})
-        .click(() => console.log(corner));
+  private renderCorner(corner: Corner): Path {
+    const circle = new Path.Circle(getCornerPoint(corner), 5);
+    circle.fillColor = 'black';
+    circle.onClick = () => console.log(corner);
+    return circle;
   }
 
   private renderBeach(beach: Beach) {
     // Start with the points along hte board.
-    const points = beach.corners.map(getCornerRenderCoords).map(c => [c.x, c.y]);
-    this.draw.polygon(points).fill('#64B5F6');
+    const points = beach.corners.map(getCornerPoint);
+    const path = new Path(points);
+    path.fillColor = '#64B5F6';
   }
 }
