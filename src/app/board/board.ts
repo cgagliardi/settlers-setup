@@ -20,6 +20,11 @@ import { RandomQueue } from './random-queue';
  * 6     3 5 7
  */
 
+ export enum GameStyle {
+   STANDARD = 'Standard',
+   CITIES_AND_KNIGHTS = 'Cities & Knights',
+ }
+
 export enum ResourceType {
   ANY = 'Any', // Used for 3:1 ports.
   BRICK = 'Brick',
@@ -29,6 +34,14 @@ export enum ResourceType {
   WOOD = 'Wood',
   WHEAT = 'Wheat',
 }
+
+export const USABLE_RESOURCES = [
+  ResourceType.BRICK,
+  ResourceType.ORE,
+  ResourceType.SHEEP,
+  ResourceType.WOOD,
+  ResourceType.WHEAT,
+] as ReadonlyArray<ResourceType>;
 
 export type HexGrid = Array<Array<Hex|undefined>>;
 export type CornerGrid = Array<Array<Corner|undefined>>;
@@ -59,6 +72,18 @@ export interface Beach {
   ports: Port[];
 }
 
+/**
+ * Given the number of a roll, returns the number of dots that appear on that roll number.
+ * The probability of the roll is this value / 36.
+ */
+export function getNumDots(rollNumber: number): number {
+  if (rollNumber < 7) {
+    return rollNumber - 1;
+  } else {
+    return 13 - rollNumber;
+  }
+}
+
 export interface BoardSpec {
   // A human readable name for this board layout.
   readonly label: string;
@@ -66,9 +91,12 @@ export interface BoardSpec {
   // being size 1. This translates to:
   // { height: hexes.length, width: (maxHexesCol.length+1)/2}
   readonly dimensions: Dimensions;
-  // Returns a queue of resources where resources.length equals the number of !undefined values in
+  // Returns a list of resources where resources.length equals the number of !undefined values in
   // hexes.
-  readonly resources: () => RandomQueue<ResourceType>;
+  readonly resources: () => ResourceType[];
+  // Returns a list of rollNumbers where rollNumbers.length equals resources.length - the number of
+  // desert resources.
+  readonly rollNumbers: () => number[];
   // Passed in the value of BoardSpec.dimensions.
   // Returns a 2d array where populated columns alternate between each row as described by the board
   // layout examples in the top of this file.
@@ -95,6 +123,7 @@ export interface BoardSpec {
  */
 export class Corner {
   score: number|null = null;
+  notes = '';
 
   constructor(
       readonly x: number,
@@ -123,6 +152,12 @@ export class Corner {
 
 export class Hex {
   resource: ResourceType|null = null;
+  rollNumber: number|null = null;
+  score: number|null = null;
+  // Cached values.
+  private portResource: ResourceType[]|undefined;
+  private neighbors: Hex[]|undefined;
+  private corners: Corner[]|undefined;
 
   /**
    * @param x x-coordinate in hexes as described in the file comments.
@@ -138,25 +173,45 @@ export class Hex {
    * All neighboring hexes on the board.
    */
   getNeighbors(): Hex[] {
-    return [
-      this.board.getHex(this.x - 2, this.y),
-      this.board.getHex(this.x + 2, this.y),
-      this.board.getHex(this.x - 1, this.y - 1),
-      this.board.getHex(this.x + 1, this.y - 1),
-      this.board.getHex(this.x - 1, this.y + 1),
-      this.board.getHex(this.x + 1, this.y + 1),
-    ].filter(n => n);
+    if (!this.neighbors) {
+      this.neighbors = [
+        this.board.getHex(this.x - 2, this.y),
+        this.board.getHex(this.x + 2, this.y),
+        this.board.getHex(this.x - 1, this.y - 1),
+        this.board.getHex(this.x + 1, this.y - 1),
+        this.board.getHex(this.x - 1, this.y + 1),
+        this.board.getHex(this.x + 1, this.y + 1),
+      ].filter(n => n);
+    }
+    return this.neighbors;
   }
 
   getCorners(): Corner[] {
-    return [
-      this.board.getCorner(this.x, this.y),
-      this.board.getCorner(this.x + 1, this.y),
-      this.board.getCorner(this.x + 2, this.y),
-      this.board.getCorner(this.x, this.y + 1),
-      this.board.getCorner(this.x + 1, this.y + 1),
-      this.board.getCorner(this.x + 2, this.y + 1),
-    ];
+    if (!this.corners) {
+      this.corners = [
+        this.board.getCorner(this.x, this.y),
+        this.board.getCorner(this.x + 1, this.y),
+        this.board.getCorner(this.x + 2, this.y),
+        this.board.getCorner(this.x, this.y + 1),
+        this.board.getCorner(this.x + 1, this.y + 1),
+        this.board.getCorner(this.x + 2, this.y + 1),
+      ];
+    }
+    return this.corners;
+  }
+
+  /**
+   * Note: this function is lazy-cached, so if it's called before the board is initialized, it will
+   * always return an incorrect value.
+   * @returns The ResourceTypes of the neighboring ports if any such port exists.
+   */
+  getPortResources(): ResourceType[] {
+    if (!this.portResource) {
+      const resources =
+          this.getCorners().filter(corner => !!corner.port).map(corner => corner.port.resource);
+      this.portResource = Array.from(new Set(resources));
+    }
+    return this.portResource;
   }
 }
 
@@ -169,7 +224,6 @@ export class Board {
   // are what's documented in the Default Board Layout at the top of this file.
   readonly hexGrid: HexGrid;
   readonly cornerGrid: CornerGrid;
-  readonly remainingResources:  RandomQueue<ResourceType>;
   readonly beaches: ReadonlyArray<Beach>;
   // Cached value for get hexes.
   private flatHexes: ReadonlyArray<Hex>;
@@ -180,7 +234,7 @@ export class Board {
     this.label = spec.label;
     this.dimensions = spec.dimensions;
     this.hexGrid = spec.hexes(this);
-    this.remainingResources = spec.resources();
+
     this.beaches = spec.beaches() as ReadonlyArray<Beach>;
     this.cornerGrid = this.generateCornerGrid();
   }

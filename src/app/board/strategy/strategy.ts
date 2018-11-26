@@ -1,4 +1,4 @@
-import { Board, BoardSpec } from '../board';
+import { Board, BoardSpec, GameStyle } from '../board';
 
 /**
  * A strategy for creating a catan board.
@@ -6,4 +6,8 @@ import { Board, BoardSpec } from '../board';
 export interface Strategy {
   readonly name: string;
   generateBoard: (spec: BoardSpec) => Board;
+}
+
+export interface StrategyConstructor {
+  new (gameStyle: GameStyle): Strategy;
 }

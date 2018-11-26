@@ -19,29 +19,12 @@ export class RandomQueue<T> {
    * @param getRandomInt Used for testing.
    */
   constructor(
-    initial?: T[]|RandomQueue<T>) {
+    initial?: ReadonlyArray<T>|RandomQueue<T>) {
     if (initial instanceof RandomQueue) {
       this.vals = initial.vals.slice();
     } else {
       this.vals = initial.slice();
     }
-  }
-
-  /**
-   * Example:
-   * RandomQueue.createByCounts(['a', 3], ['b', 1]);
-   * creates ['a', 'a', 'a', 'b'];
-   * @param valueCounts A nested array of values followed by the amount of that value
-   *     that should be in the queue.
-   */
-  static createByCounts<T>(...valueCounts: Array<[T, number]>) {
-    const vals = [];
-    for (const [val, n] of valueCounts) {
-      for (let i = 0; i < n; i++) {
-        vals.push(val);
-      }
-    }
-    return new RandomQueue(vals);
   }
 
   get length() {
@@ -90,6 +73,14 @@ export class RandomQueue<T> {
     }
     this.remove(popped);
     return popped;
+  }
+
+  popAvoiding(...vals: T[]): T|undefined {
+    const val = this.popExcluding(...vals);
+    if (val !== undefined) {
+      return val;
+    }
+    return this.pop();
   }
 
   pop(): T|undefined {
