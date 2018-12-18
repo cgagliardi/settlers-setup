@@ -1,66 +1,9 @@
 import { Board, BoardSpec, ResourceType, Hex, getNumDots, GameStyle, USABLE_RESOURCES } from '../board';
 import { Strategy } from './strategy';
 import * as _ from 'lodash';
-import { assert } from 'src/app/assert';
+import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
-
-function hasAll<T>(set: Set<T>|Map<T, any>, ...vals: T[]): boolean {
-  for (const val of vals) {
-    if (!set.has(val)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function sumByKey<T>(map: Map<T, number>, ...keys: T[]): number {
-  let sum = 0;
-  for (const key of keys) {
-    sum += map.get(key) || 0;
-  }
-  return sum;
-}
-
-function findLowestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => number): T|undefined {
-  let lowestVal;
-  let lowestNum = Number.MAX_VALUE;
-  for (const val of collection) {
-    const score = fn(val);
-    if (score < lowestNum) {
-      lowestNum = score;
-      lowestVal = val;
-    }
-  }
-  return lowestVal;
-}
-
-function findHighestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => number): T|undefined {
-  let highestVal;
-  let highestNum = Number.MIN_VALUE;
-  for (const val of collection) {
-    const score = fn(val);
-    if (score > highestNum) {
-      highestNum = score;
-      highestVal = val;
-    }
-  }
-  return highestVal;
-}
-
-function findAllLowestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => number): T[]|undefined {
-  let lowestVals;
-  let lowestNum = Number.MAX_VALUE;
-  for (const val of collection) {
-    const score = fn(val);
-    if (score < lowestNum) {
-      lowestNum = score;
-      lowestVals = [val];
-    } else if (score === lowestNum) {
-      lowestVals.push(val);
-    }
-  }
-  return lowestVals;
-}
+import { findAllLowestBy, findLowestBy, hasAll, sumByKey } from 'src/app/util/collections';
 
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
@@ -74,8 +17,9 @@ export class BalancedStrategy implements Strategy {
   constructor(readonly gameStyle: GameStyle) {}
 
   generateBoard(spec: BoardSpec): Board {
+    // Place all of the resource hexes. This function can fail, so its run in a loop until it
+    // succeeds. Place hexes also places a few roll numbers.
     let board;
-
     do {
       // TODO - board construction is expensive. Implement a way to reset resources.
       this.remainingNumbers = _.sortBy(spec.rollNumbers(), n => getNumDots(n));
@@ -90,6 +34,7 @@ export class BalancedStrategy implements Strategy {
         hex => hex.resource !== ResourceType.DESERT && !hex.rollNumber);
     assert(this.remainingHexes.length === this.remainingNumbers.length);
 
+    // Place the roll numbers until there are none left.
     while (this.remainingHexes.length) {
       this.placeNumber();
     }
@@ -103,7 +48,8 @@ export class BalancedStrategy implements Strategy {
    */
   private placeHexes(board: Board): boolean {
     // First place one of each resource and a corresponding high number such that each of these
-    // high numbers are not touching each other.
+    // high numbers are not touching each other. This ensures every resource has at least one
+    // good roll number.
     for (const resource of this.initialResources) {
       const availableHexes = board.hexes.filter(h =>
           !h.getPortResources().includes(resource) &&
@@ -114,7 +60,7 @@ export class BalancedStrategy implements Strategy {
       this.remainingResources.remove(resource);
     }
 
-    // First set the resources on hexes with ports such that they don't get a desert and don't
+    // Next set the resources on hexes with typed ports such that they don't get a desert and don't
     // have their matching resource.
     const hexesWithTypedPorts = board.hexes.filter(hex =>
         !hex.resource &&
@@ -126,7 +72,9 @@ export class BalancedStrategy implements Strategy {
       hex.resource = this.remainingResources.popExcluding(...excludeResources);
     }
 
-    // Now set all remaining hexes at random, but avoid neighboring pieces.
+    // Now set all remaining hexes at random, but without any of the same resources touching itself.
+    // If we are unable to replace a hex without it touching the same resource type, return false
+    // so that the function can be ran again on a new board.
     for (const hex of board.hexes) {
       if (hex.resource) {
         continue;
@@ -141,57 +89,25 @@ export class BalancedStrategy implements Strategy {
     return true;
   }
 
-  placeNumber(): boolean {
+  /**
+   * Scores every corner and every hex of the board, then places the highest available number of the
+   * lowest valued hex.
+   */
+  private placeNumber() {
     this.scoreBoard();
 
-    const nextNum = _.last(this.remainingNumbers);
-
-    let hex;
-    hex = _.sample(findAllLowestBy(this.remainingHexes, h => h.score));
-
-    // const resource = this.findLowestResourceType(this.board, this.remainingHexes);
-    // const hexes = this.remainingHexes.filter(h => h.resource === resource);
-    // assert(hexes.length);
-    // hex = _.sample(findAllLowestBy(hexes, h => h.score));
-
+    const hex = _.sample(findAllLowestBy(this.remainingHexes, h => h.score));
     _.pull(this.remainingHexes, hex);
-    this.remainingNumbers.pop();
 
-    hex.rollNumber = nextNum;
-
-    return !!this.remainingHexes.length;
+    hex.rollNumber = this.remainingNumbers.pop();
   }
 
   /**
-   * @returns The hex that has the least number of neighbors that have their rollNumbers populated.
-   *    If there are multiple hexes with the same value, returns a random one from that set.
+   * Computes a score for every corner of the board based on the value of each roll number/resource
+   * at that corner and the presence of a port. Then computes the value of each hex but summing the
+   * corners of that hex.
    */
-  private findLeastNeighboringNumbers(hexes: Hex[]): Hex {
-    const toNumNumberedNeighbors =
-        hex => hex.getNeighbors().filter(n => n.rollNumber).length;
-    const allNumNeighbors = hexes.map(toNumNumberedNeighbors);
-    const lowestNum = findLowestBy(allNumNeighbors, _.identity);
-
-    const allWithLowest = hexes.filter(hex => toNumNumberedNeighbors(hex) === lowestNum);
-    assert(allWithLowest.length);
-    return _.sample(allWithLowest);
-  }
-
-  /**
-   * @returns The lowest scored (by sum of each hex) resource of the resoureces available in
-   * remainingHexes.
-   */
-  private findLowestResourceType(board: Board, remainingHexes: Hex[]): ResourceType {
-    // Figure out what resources are still left to populate so that we don't return a value that
-    // can't be set.
-    const remainingResources = _.uniq(remainingHexes.map(hex => hex.resource));
-
-    const lowestResource = findLowestBy(remainingResources, resource =>
-        _.meanBy(board.hexes.filter(hex => hex.resource === resource).map(hex => hex.score)));
-    return assert(lowestResource);
-  }
-
-  scoreBoard() {
+  private scoreBoard() {
     const nextNumDots = this.remainingNumbers.length ?
         getNumDots(_.last(this.remainingNumbers)) : 0;
 
@@ -262,7 +178,6 @@ export class BalancedStrategy implements Strategy {
     if (resource === ResourceType.DESERT) {
       return 0;
     }
-    // TODO: These scores will need some more thought.
     switch (this.gameStyle) {
       case GameStyle.CITIES_AND_KNIGHTS:
         switch (resource) {
