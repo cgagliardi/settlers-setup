@@ -1,0 +1,23 @@
+header {
+  background: #33691E;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 18px 24px;
+  margin-bottom: 10px;
+}
+
+.board {
+  padding: 10px;
+
+  .buttons {
+    text-align: right;
+    padding-bottom: 10px;
+  }
+}
+
+footer {
+  margin-top: 12px;
+  padding: 18px 24px;
+  font-style: italic;
+}

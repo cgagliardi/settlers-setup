@@ -23,7 +23,8 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "src/normalize.css",
+              "src/styles.scss"
             ],
             "scripts": [
               "node_modules/paper/dist/paper-full.min.js"
@@ -125,5 +126,10 @@
       }
     }
   },
-  "defaultProject": "settlers-setup"
+  "defaultProject": "settlers-setup",
+  "schematics": {
+    "@schematics/angular:component": {
+      "styleext": "scss"
+    }
+  }
 }

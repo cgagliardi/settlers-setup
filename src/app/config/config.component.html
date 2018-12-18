@@ -1,0 +1,37 @@
+<form class="config" [formGroup]="configForm" (ngSubmit)="emitConfig()">
+  <div class="choice">
+    <h2>Board Shape:</h2>
+    <mat-radio-group formControlName="boardShape">
+      <div *ngFor="let boardShape of boardShapes">
+        <mat-radio-button [value]="boardShape.value">
+          {{boardShape.label}}
+        </mat-radio-button>
+      </div>
+    </mat-radio-group>
+  </div>
+
+  <div class="choice">
+    <h2>Expansion:</h2>
+    <mat-radio-group formControlName="gameStyle">
+      <div *ngFor="let gameStyle of gameStyles">
+        <mat-radio-button [value]="gameStyle.value">
+          {{gameStyle.label}}
+        </mat-radio-button>
+      </div>
+    </mat-radio-group>
+  </div>
+
+  <div class="choice">
+    <h2>Board Generator:</h2>
+    <mat-radio-group formControlName="strategy">
+      <div *ngFor="let strategy of strategies">
+        <mat-radio-button [value]="strategy.value">
+          {{strategy.label}}
+        </mat-radio-button>
+      </div>
+    </mat-radio-group>
+  </div>
+
+  <button mat-raised-button color="primary"
+          type="submit">Generate</button>
+</form>

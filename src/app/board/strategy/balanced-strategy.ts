@@ -90,12 +90,10 @@ export class BalancedStrategy implements Strategy {
         hex => hex.resource !== ResourceType.DESERT && !hex.rollNumber);
     assert(this.remainingHexes.length === this.remainingNumbers.length);
 
-    // while (this.remainingHexes.length) {
-    //   this.placeNumber();
-    // }
+    while (this.remainingHexes.length) {
+      this.placeNumber();
+    }
 
-    window['board'] = board;
-    window['strategy'] = this;
     return board;
   }
 

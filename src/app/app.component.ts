@@ -4,29 +4,32 @@ import { BOARD_SPECS, BoardShape } from './board/board-specs';
 import { BalancedStrategy } from './board/strategy/balanced-strategy';
 import { RandomStrategy } from './board/strategy/random-strategy';
 import { Strategy } from './board/strategy/strategy';
+import { SettlersConfig } from './config/config.component';
 
-const BOARD_SPEC = BOARD_SPECS[BoardShape.EXPANSION6];
+const BOARD_SPEC = BOARD_SPECS[BoardShape.STANDARD];
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  board: Board;
+  config: SettlersConfig|null = null;
+  board: Board|null = null;
+  formValue: Object|null = null;
 
-  constructor() {
-    const strategy = this.createStrategy();
-    this.board = strategy.generateBoard(BOARD_SPEC);
+  handleConfig(config: SettlersConfig) {
+    this.config = config;
+    this.formValue = this.config.formValue;
+    this.createBoard();
   }
 
-  reset() {
-    const strategy = this.createStrategy();
-    this.board = strategy.generateBoard(BOARD_SPEC);
+  createBoard() {
+    this.board = this.config.strategy.generateBoard(this.config.spec);
   }
 
-  private createStrategy(): Strategy {
-    return new BalancedStrategy(GameStyle.STANDARD);
-    // return new RandomStrategy(GameStyle.STANDARD);
+  clearConfig() {
+    this.config = null;
+    this.board = null;
   }
 }

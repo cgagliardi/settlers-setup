@@ -1,2 +1,20 @@
-<i (click)="reset()">reset</i><br>
-<app-catan-board [board]="board"></app-catan-board>
+<header class="mat-elevation-z2">
+  Settlers Setup
+</header>
+<app-config *ngIf="!config"
+            (configUpdate)="handleConfig($event)"
+            [formValue]="formValue"></app-config>
+<div *ngIf="board" class="board">
+    <div class="buttons">
+    <button mat-raised-button color="primary" (click)="createBoard()">Reset</button>
+    &nbsp;&nbsp;
+    <button mat-raised-button color="primary" (click)="clearConfig()">Settings</button>
+  </div>
+
+  <app-catan-board [board]="board"></app-catan-board>
+</div>
+
+<footer>
+  Settlers Setup is in no way affiliated with Mayfair Games or Klaus Teuber, of whom Settlers of
+  Catan is a registered trademark.
+</footer>
