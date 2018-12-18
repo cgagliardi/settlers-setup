@@ -91,7 +91,8 @@ export class CatanBoardComponent implements OnChanges {
   @ViewChild('container') container;
   scope: PaperScope;
   project: Project;
-  private showStats = false;
+  // To toggle showStats add ?debug=1 to the URL.
+  private showStats = !!location.search.match(/(\?|&)debug=[^&]+/);
   private sizeAndScale: SizeAndScale;
 
   constructor() {
@@ -197,10 +198,12 @@ export class CatanBoardComponent implements OnChanges {
       ((HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * hex.y + BOARD_OFFSET.y + HEX_DIMS.height / 2)
           * scale);
 
-    group.onClick = () => {
-      const details = {x: hex.x, y: hex.y, score: hex.score};
-      console.log('Hex', details);
-    };
+    if (this.showStats) {
+      group.onClick = () => {
+        const details = {x: hex.x, y: hex.y, score: hex.score};
+        console.log('Hex', details);
+      };
+    }
 
     return group;
   }
@@ -250,9 +253,6 @@ export class CatanBoardComponent implements OnChanges {
 
     group.onClick = () => {
       console.log(corner);
-      if (window['corners']) {
-        window['corners'].push(corner);
-      }
     };
 
     return circle;

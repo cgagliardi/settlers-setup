@@ -1,24 +1,9 @@
-import { RandomQueue } from './random-queue';
-
 /**
- * Default Board Layout
- *    012345678
- * 0    2 4 6
- * 1   1 3 5 7
- * 2  0 2 4 6 8
- * 3   1 3 5 7
- * 4    2 4 6
- *
- * Expansion 5-6 Board Layout
- *    01234567890
- * 0     3 5 7
- * 1    2 4 6 8
- * 2   1 3 5 7 9
- * 3  0 2 4 6 8 0
- * 4   1 3 5 7 9
- * 5    2 4 6 8
- * 6     3 5 7
+ * @fileoverview This file defines the various enums, type definitions and interfaces needed to
+ * define a Settlers board (BoardSpec). Additionaly, this file provides the Board class, which a
+ * Strategy manipulates to fill a board and the UI reads to render the board.
  */
+import { RandomQueue } from './random-queue';
 
  export enum GameStyle {
    STANDARD = 'Standard',
@@ -84,6 +69,29 @@ export function getNumDots(rollNumber: number): number {
   }
 }
 
+/**
+ * BoardSpec defines a specific settlers of catan board such that a setup strategy can be built from
+ * it.
+ *
+ * The indexes of the HexGrid 2d array are demonstrated below.
+ * Default Board Layout
+ *    012345678
+ * 0    2 4 6
+ * 1   1 3 5 7
+ * 2  0 2 4 6 8
+ * 3   1 3 5 7
+ * 4    2 4 6
+ *
+ * Expansion 5-6 Board Layout
+ *    01234567890
+ * 0     3 5 7
+ * 1    2 4 6 8
+ * 2   1 3 5 7 9
+ * 3  0 2 4 6 8 0
+ * 4   1 3 5 7 9
+ * 5    2 4 6 8
+ * 6     3 5 7
+ */
 export interface BoardSpec {
   // A human readable name for this board layout.
   readonly label: string;

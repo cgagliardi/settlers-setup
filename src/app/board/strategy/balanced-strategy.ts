@@ -269,9 +269,9 @@ export class BalancedStrategy implements Strategy {
           case ResourceType.SHEEP:
             return 1;
           case ResourceType.ORE:
-            return 1.3;
-          default:
             return 1.2;
+          default:
+            return 1.1;
         }
 
       default:
