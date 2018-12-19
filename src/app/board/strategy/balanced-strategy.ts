@@ -3,7 +3,7 @@ import { Strategy } from './strategy';
 import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
-import { findAllLowestBy, findLowestBy, hasAll, sumByKey } from 'src/app/util/collections';
+import { findAllLowestBy, findLowestBy, hasAll, sumByKey, findHighestBy } from 'src/app/util/collections';
 
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
@@ -17,6 +17,37 @@ export class BalancedStrategy implements Strategy {
   constructor(readonly gameStyle: GameStyle) {}
 
   generateBoard(spec: BoardSpec): Board {
+    // The algorithm in this class isn't great. So to compensate, we genrate 20 boards, and return
+    // the best one.
+    let bestBoard;
+    let lowestScore = Number.MAX_VALUE;
+    for (let i = 0; i < 20; i++) {
+      const board = this.generateSingleBoard(spec);
+      const score = this.evaluateBoard(board);
+      if (lowestScore > score) {
+        bestBoard = board;
+        lowestScore = score;
+      }
+    }
+    console.log('Board score: ' + lowestScore);
+    return bestBoard;
+  }
+
+  /**
+   * @returns A number that gives the quality of the board, where the lower the number, the better
+   * the board.
+   */
+  private evaluateBoard(board: Board): number {
+    const relevantCorners = board.corners.filter(corner => {
+      const hexes = corner.getHexes();
+      return hexes.length === 3 && !hexes.find(hex => hex.resource === ResourceType.DESERT);
+    });
+    const highScore = findHighestBy(relevantCorners, corner => corner.score).score;
+    const lowScore = findLowestBy(relevantCorners, corner => corner.score).score;
+    return highScore - lowScore;
+  }
+
+  private generateSingleBoard(spec: BoardSpec): Board {
     // Place all of the resource hexes. This function can fail, so its run in a loop until it
     // succeeds. Place hexes also places a few roll numbers.
     let board;
@@ -38,6 +69,7 @@ export class BalancedStrategy implements Strategy {
     while (this.remainingHexes.length) {
       this.placeNumber();
     }
+    this.scoreBoard();
 
     return board;
   }
