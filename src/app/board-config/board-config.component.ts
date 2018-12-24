@@ -6,6 +6,12 @@ import { RandomStrategy } from '../board/strategy/random-strategy';
 import { Strategy, StrategyConstructor } from '../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 
+export interface FormState {
+  strategy: string;
+  gameStyle: GameStyle;
+  boardShape: BoardShape;
+}
+
 interface OptionDef {
   label: string;
   value: string;
@@ -26,7 +32,7 @@ const STRATEGY_OPTIONS = [{
 }] as StategyOption[];
 
 export interface SettlersConfig {
-  readonly formValue: Object;
+  readonly formState: FormState;
   readonly strategy: Strategy;
   readonly spec: BoardSpec;
 }
@@ -75,7 +81,7 @@ export class BoardConfigComponent implements OnChanges {
   /**
    * @return the current state of the form.
    */
-  getFormState(): Object {
+  getFormState(): FormState {
     return this.configForm.value;
   }
 
@@ -84,7 +90,7 @@ export class BoardConfigComponent implements OnChanges {
     const ctor = this.strategies.find(s => s.value === state.strategy).ctor;
     const strategy = new ctor(state.gameStyle);
     this.configUpdate.emit({
-      formValue: state,
+      formState: state,
       strategy,
       spec: BOARD_SPECS[state.boardShape],
     });

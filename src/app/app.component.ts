@@ -37,11 +37,11 @@ export class AppComponent {
   config: SettlersConfig|null = null;
   configOpen = true;
   board: Board|null = null;
-  formValue: Object|null = null;
+  configFormState: Object|null = null;
 
   handleConfig(config: SettlersConfig) {
     this.config = config;
-    this.formValue = this.config.formValue;
+    this.configFormState = this.config.formState;
     this.createBoard();
     this.toggleConfigMenu();
   }
@@ -60,7 +60,7 @@ export class AppComponent {
     // If the button is pressed while the form is open, only generate a new board if the form has
     // changed since it was closed.
     if (this.configOpen &&
-        !_.isEqual(this.boardConfig.getFormState(), this.formValue)) {
+        !_.isEqual(this.boardConfig.getFormState(), this.configFormState)) {
       this.boardConfig.emitConfig();
     } else {
       this.toggleConfigMenu();
