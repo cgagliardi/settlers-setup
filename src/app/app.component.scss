@@ -1,7 +1,8 @@
 @import '../material-theme.scss';
 
 $button-padding: 20px;
-$board-padding: 5px;
+$board-padding-topbottom: 10px;
+$board-padding-sides: 5px;
 
 header {
   background: $primary;
@@ -37,11 +38,13 @@ header {
 }
 
 .board {
-  padding: $board-padding;
+  padding: $board-padding-topbottom $board-padding-sides;
+  position: relative;
 
   .board-button {
-    float: right;
-    padding-right: $button-padding - $board-padding;
+    position: absolute;
+    top: 0;
+    right: $button-padding - $board-padding-sides + 6px;
   }
 }
 
