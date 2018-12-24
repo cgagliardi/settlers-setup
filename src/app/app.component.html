@@ -11,16 +11,12 @@
   <app-sliding-card #boardConfigSlider>
     <app-board-config #boardConfig
               (configUpdate)="handleConfig($event)"
-              [formState]="formState"></app-board-config>
+              [formState]="configFormState"></app-board-config>
   </app-sliding-card>
 </div>
 <div *ngIf="!board" class="no-board-placeholder"></div>
 <div *ngIf="board" class="board">
   <div class="board-button">
-    <button mat-icon-button color="primary" (click)="createBoard()">
-        <mat-icon aria-label="Reset">refresh</mat-icon>
-    </button>
-    &nbsp;&nbsp;
     <button mat-icon-button color="primary" (click)="createBoard()">
         <mat-icon aria-label="Reset">refresh</mat-icon>
     </button>
