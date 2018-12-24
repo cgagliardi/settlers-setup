@@ -1,12 +1,16 @@
 .config {
-  margin: 32px;
+  margin: 32px auto;
+  width: 400px;
+  box-sizing: border-box;
+  max-width: calc(100% - 32px);
+  padding: 42px 32px 16px;
 }
 
 .choice {
   margin: 16px 0px;
 
   h2 {
-    margin: 0 0 2px;;
+    margin: 0 0 8px;
     padding: 0;
     font-size: 16px;
     font-weight: normal;

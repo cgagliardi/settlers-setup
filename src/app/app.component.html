@@ -1,14 +1,25 @@
-<header class="mat-elevation-z2">
+<header class="mat-elevation-z3">
+  <div class="settings-button">
+    <button mat-icon-button color="accent" (click)="handleConfigButton()">
+        <mat-icon aria-label="Settings">settings</mat-icon>
+    </button>
+  </div>
   Settlers Setup
 </header>
-<app-config *ngIf="!config"
+<div class="config-slider" #configSlider
+     [@toggleConfig]="configAnimationState">
+  <app-board-config
+            #boardConfig
+            class="board-config"
             (configUpdate)="handleConfig($event)"
-            [formValue]="formValue"></app-config>
+            [formValue]="formValue"></app-board-config>
+</div>
+<div *ngIf="!board" class="no-board-placeholder"></div>
 <div *ngIf="board" class="board">
-    <div class="buttons">
-    <button mat-raised-button color="primary" (click)="createBoard()">Reset</button>
-    &nbsp;&nbsp;
-    <button mat-raised-button color="primary" (click)="clearConfig()">Settings</button>
+  <div class="board-button">
+    <button mat-icon-button color="primary" (click)="createBoard()">
+        <mat-icon aria-label="Reset">refresh</mat-icon>
+    </button>
   </div>
 
   <app-catan-board [board]="board"></app-catan-board>

@@ -1,18 +1,47 @@
+@import '../material-theme.scss';
+
+$button-padding: 20px;
+$board-padding: 5px;
+
 header {
-  background: #33691E;
+  background: $primary;
   color: white;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
-  padding: 18px 24px;
+  // We add an extra 100px of space above the header so that the negative scroll on Apple devices
+  // continues to show the header.
+  margin-top: -100px;
+  padding: 118px 0 18px 20px;
   margin-bottom: 10px;
+  z-index: 20;
+  position: relative;
+
+  .settings-button {
+    float: right;
+    margin-top: -8px;
+    padding-right: $button-padding;
+  }
+}
+
+.config-slider {
+  position: absolute;
+  top: 0px;
+  right: 0;
+  z-index: 5;
+  transform: translate3d(0,0,0);
+  display: block;
+}
+
+.no-board-placeholder {
+  height: 500px;
 }
 
 .board {
-  padding: 10px;
+  padding: $board-padding;
 
-  .buttons {
-    text-align: right;
-    padding-bottom: 10px;
+  .board-button {
+    float: right;
+    padding-right: $button-padding - $board-padding;
   }
 }
 

@@ -5,16 +5,17 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import { ReactiveFormsModule } from '@angular/forms';
+import {MatCardModule} from '@angular/material/card';
 
 import { AppComponent } from './app.component';
 import { CatanBoardComponent } from './catan-board/catan-board.component';
-import { ConfigComponent } from './config/config.component';
+import { BoardConfigComponent } from './board-config/board-config.component';
 
 @NgModule({
    declarations: [
       AppComponent,
       CatanBoardComponent,
-      ConfigComponent,
+      BoardConfigComponent,
    ],
    imports: [
       BrowserModule,
@@ -22,6 +23,7 @@ import { ConfigComponent } from './config/config.component';
       MatRadioModule,
       MatButtonModule,
       MatIconModule,
+      MatCardModule,
       ReactiveFormsModule,
    ],
    providers: [],

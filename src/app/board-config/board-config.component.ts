@@ -1,4 +1,4 @@
-import { Component, OnInit, EventEmitter, Output, Input, OnChanges } from '@angular/core';
+import { Component, OnInit, EventEmitter, Output, Input, OnChanges, ElementRef, ViewChild } from '@angular/core';
 import { GameStyle, Board, BoardSpec } from '../board/board';
 import { BoardShape, BOARD_SPECS } from '../board/board-specs';
 import { BalancedStrategy } from '../board/strategy/balanced-strategy';
@@ -32,11 +32,11 @@ export interface SettlersConfig {
 }
 
 @Component({
-  selector: 'app-config',
-  templateUrl: './config.component.html',
-  styleUrls: ['./config.component.scss']
+  selector: 'app-board-config',
+  templateUrl: './board-config.component.html',
+  styleUrls: ['./board-config.component.scss']
 })
-export class ConfigComponent implements OnChanges {
+export class BoardConfigComponent implements OnChanges {
   boardShapes = [{
     label: 'Standard',
     value: BoardShape.STANDARD,
@@ -63,8 +63,9 @@ export class ConfigComponent implements OnChanges {
 
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
   @Input() formValue?: Object|null;
+  @ViewChild('container') containerRef: ElementRef;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder, ) { }
 
   ngOnChanges() {
     if (this.formValue) {
@@ -81,5 +82,9 @@ export class ConfigComponent implements OnChanges {
       strategy,
       spec: BOARD_SPECS[state.boardShape],
     });
+  }
+
+  getHeight(): number {
+    return this.containerRef.nativeElement.offsetHeight;
   }
 }

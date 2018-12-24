@@ -1,8 +1,8 @@
-// TODO: Make a custom theme.
-@import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
+@import "./material-theme.scss";
 
 body {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
-  color: #222;
+  background: $page-background;
+  color: white;
 }

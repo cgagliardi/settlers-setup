@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, OnChanges } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, OnChanges, ElementRef } from '@angular/core';
 import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach, Port, getNumDots } from '../board/board';
 import { PaperScope, Project, Path, Point, PointText, TextItem, Group, Item, Shape } from 'paper';
 import { assert } from '../util/assert';
@@ -87,8 +87,8 @@ interface SizeAndScale {
 })
 export class CatanBoardComponent implements OnChanges {
   @Input() board: Board;
-  @ViewChild('canvas') canvas;
-  @ViewChild('container') container;
+  @ViewChild('canvas') canvas: ElementRef;
+  @ViewChild('container') container: ElementRef;
   scope: PaperScope;
   project: Project;
   // To toggle showStats add ?debug=1 to the URL.
