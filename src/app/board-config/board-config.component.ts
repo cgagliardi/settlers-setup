@@ -68,13 +68,13 @@ export class BoardConfigComponent implements OnChanges {
   });
 
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
-  @Input() formValue?: Object|null;
+  @Input() formState?: FormState|null;
 
   constructor(private fb: FormBuilder, ) { }
 
   ngOnChanges() {
-    if (this.formValue) {
-      this.configForm.patchValue(this.formValue);
+    if (this.formState) {
+      this.configForm.patchValue(this.formState);
     }
   }
 
