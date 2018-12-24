@@ -3,6 +3,7 @@ import { Board, GameStyle } from './board/board';
 import { BOARD_SPECS, BoardShape } from './board/board-specs';
 import { SettlersConfig, BoardConfigComponent } from './board-config/board-config.component';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { SlidingCardComponent } from './sliding-card/sliding-card.component';
 
 const BOARD_SPEC = BOARD_SPECS[BoardShape.STANDARD];
 
@@ -28,6 +29,7 @@ const BOARD_SPEC = BOARD_SPECS[BoardShape.STANDARD];
   ],
 })
 export class AppComponent {
+  @ViewChild('boardConfigSlider') boardConfigSlider: SlidingCardComponent;
   @ViewChild('boardConfig') boardConfig: BoardConfigComponent;
   configHeight: number;
   configAnimationState: Object = { value: 'open' };
@@ -48,7 +50,7 @@ export class AppComponent {
     if (this.configOpen) {
       this.configAnimationState = { value: 'open' };
     } else {
-      const height = this.boardConfig.getHeight();
+      const height = this.boardConfigSlider.getHeight();
       this.configAnimationState = { value: 'closed', params: {height} };
     }
   }

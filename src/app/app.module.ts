@@ -10,12 +10,14 @@ import {MatCardModule} from '@angular/material/card';
 import { AppComponent } from './app.component';
 import { CatanBoardComponent } from './catan-board/catan-board.component';
 import { BoardConfigComponent } from './board-config/board-config.component';
+import { SlidingCardComponent } from './sliding-card/sliding-card.component';
 
 @NgModule({
    declarations: [
       AppComponent,
       CatanBoardComponent,
       BoardConfigComponent,
+      SlidingCardComponent,
    ],
    imports: [
       BrowserModule,

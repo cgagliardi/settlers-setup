@@ -63,7 +63,6 @@ export class BoardConfigComponent implements OnChanges {
 
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
   @Input() formValue?: Object|null;
-  @ViewChild('container') containerRef: ElementRef;
 
   constructor(private fb: FormBuilder, ) { }
 
@@ -82,9 +81,5 @@ export class BoardConfigComponent implements OnChanges {
       strategy,
       spec: BOARD_SPECS[state.boardShape],
     });
-  }
-
-  getHeight(): number {
-    return this.containerRef.nativeElement.offsetHeight;
   }
 }

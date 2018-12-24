@@ -8,11 +8,11 @@
 </header>
 <div class="config-slider" #configSlider
      [@toggleConfig]="configAnimationState">
-  <app-board-config
-            #boardConfig
-            class="board-config"
-            (configUpdate)="handleConfig($event)"
-            [formValue]="formValue"></app-board-config>
+  <app-sliding-card #boardConfigSlider>
+    <app-board-config #boardConfig
+              (configUpdate)="handleConfig($event)"
+              [formValue]="formValue"></app-board-config>
+  </app-sliding-card>
 </div>
 <div *ngIf="!board" class="no-board-placeholder"></div>
 <div *ngIf="board" class="board">
