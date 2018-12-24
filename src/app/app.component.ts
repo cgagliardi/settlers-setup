@@ -4,6 +4,7 @@ import { BOARD_SPECS, BoardShape } from './board/board-specs';
 import { SettlersConfig, BoardConfigComponent } from './board-config/board-config.component';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { SlidingCardComponent } from './sliding-card/sliding-card.component';
+import * as _ from 'lodash';
 
 const BOARD_SPEC = BOARD_SPECS[BoardShape.STANDARD];
 
@@ -56,7 +57,10 @@ export class AppComponent {
   }
 
   handleConfigButton() {
-    if (this.configOpen) {
+    // If the button is pressed while the form is open, only generate a new board if the form has
+    // changed since it was closed.
+    if (this.configOpen &&
+        !_.isEqual(this.boardConfig.getFormState(), this.formValue)) {
       this.boardConfig.emitConfig();
     } else {
       this.toggleConfigMenu();

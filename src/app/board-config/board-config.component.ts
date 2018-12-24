@@ -72,8 +72,15 @@ export class BoardConfigComponent implements OnChanges {
     }
   }
 
+  /**
+   * @return the current state of the form.
+   */
+  getFormState(): Object {
+    return this.configForm.value;
+  }
+
   emitConfig() {
-    const state = this.configForm.value;
+    const state = this.getFormState();
     const ctor = this.strategies.find(s => s.value === state.strategy).ctor;
     const strategy = new ctor(state.gameStyle);
     this.configUpdate.emit({
