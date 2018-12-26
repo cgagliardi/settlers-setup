@@ -6,6 +6,7 @@
   </div>
   Settlers Setup
 </header>
+
 <div class="config-slider" #configSlider
      [@toggleConfig]="configAnimationState">
   <app-sliding-card #boardConfigSlider>
@@ -25,7 +26,4 @@
   <app-catan-board [board]="board"></app-catan-board>
 </div>
 
-<footer>
-  Settlers Setup is in no way affiliated with Mayfair Games or Klaus Teuber, of whom Settlers of
-  Catan is a registered trademark.
-</footer>
+<app-footer></app-footer>

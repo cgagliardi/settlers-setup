@@ -4,6 +4,12 @@ $button-padding: 20px;
 $board-padding-topbottom: 10px;
 $board-padding-sides: 5px;
 
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 header {
   background: $primary;
   color: white;
@@ -38,6 +44,7 @@ header {
 }
 
 .board {
+  flex-grow: 1;
   padding: $board-padding-topbottom $board-padding-sides;
   position: relative;
 
@@ -46,10 +53,4 @@ header {
     top: 0;
     right: $button-padding - $board-padding-sides + 6px;
   }
-}
-
-footer {
-  margin-top: 12px;
-  padding: 18px 24px;
-  font-style: italic;
 }

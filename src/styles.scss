@@ -1,8 +1,15 @@
 @import "./material-theme.scss";
 
-body {
+html, body {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
   background: $page-background;
   color: white;
+  height: 100%;
+  margin: 0;
+}
+
+p {
+  line-height: 1.5em;
+  margin: 2em 0;
 }
