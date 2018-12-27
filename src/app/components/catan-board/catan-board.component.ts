@@ -4,6 +4,7 @@ import { PaperScope, Project, Path, Point, PointText, TextItem, Group, Item, Sha
 import { assert } from '../../util/assert';
 import * as bezier from 'bezier-easing';
 import * as _ from 'lodash';
+import { findHighestBy, findLowestBy } from 'src/app/util/collections';
 
 
 // Stands for grid size. This is also the length of a hex size.
@@ -195,8 +196,11 @@ export class CatanBoardComponent implements OnChanges {
     }
 
     if (this.showStats) {
+      const bestCorner = findHighestBy(this.board.corners, c => c.score);
+      const worstCorner = findLowestBy(this.board.corners, c => c.score);
+
       for (const corner of this.board.corners) {
-        this.renderCorner(corner);
+        this.renderCorner(corner, bestCorner === corner, worstCorner === corner);
       }
     }
 
@@ -300,13 +304,20 @@ export class CatanBoardComponent implements OnChanges {
     return group;
   }
 
-  private renderCorner(corner: Corner): Path {
+  private renderCorner(corner: Corner, isBest: boolean, isWorst: boolean): Path {
     const scale = this.sizeAndScale.scale;
     const group = new Group();
 
     const point = this.getCornerPoint(corner);
     const circle = new Path.Circle(point, 10 * scale);
-    circle.fillColor = 'black';
+
+    if (isBest) {
+      circle.fillColor = 'green';
+    } else if (isWorst) {
+      circle.fillColor = 'red';
+    } else {
+      circle.fillColor = 'black';
+    }
     group.addChild(circle);
 
     const text = this.renderText(_.round(corner.score, 1) + '',

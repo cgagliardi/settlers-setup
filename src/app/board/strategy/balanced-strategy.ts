@@ -44,13 +44,13 @@ export class BalancedStrategy implements Strategy {
    * the board.
    */
   private scoreBoard(board: Board): number {
-    const relevantCorners = board.corners.filter(corner => {
-      const hexes = corner.getHexes();
-      return hexes.length === 3 && !hexes.find(hex => hex.resource === ResourceType.DESERT);
-    });
-    const highScore = findHighestBy(relevantCorners, corner => corner.score).score;
-    const lowScore = findLowestBy(relevantCorners, corner => corner.score).score;
-    return highScore - lowScore;
+    this.scoreHexesAndCorners(true /* balanceCoastAndDesert */);
+
+    // Compute the variance of the corner scores.
+    const scores = board.corners.map(c => c.score);
+    const mean = _.mean(scores);
+    const sum = _.sum(scores.map(s => Math.pow(mean - s, 2)));
+    return sum / board.corners.length;
   }
 
   private generateSingleBoard(spec: BoardSpec): Board {
@@ -78,7 +78,6 @@ export class BalancedStrategy implements Strategy {
     while (this.remainingHexes.length) {
       this.placeNumber();
     }
-    this.scoreHexesAndCorners();
 
     return board;
   }
@@ -207,16 +206,26 @@ export class BalancedStrategy implements Strategy {
    * at that corner and the presence of a port. Then computes the value of each hex but summing the
    * corners of that hex.
    */
-  private scoreHexesAndCorners() {
+  private scoreHexesAndCorners(balanceCoastAndDesert = false) {
     const nextNumDots = this.remainingNumbers.length ?
         getNumDots(_.last(this.remainingNumbers)) : 0;
 
     // First score every corner by evaluating how good of a spot that specific corner is.
     for (const corner of this.board.corners) {
       const hexes = corner.getHexes();
-      // Sum te value of each neighboring hex.
+      // Sum the value of each neighboring hex.
       let score = _.sumBy(hexes, hex =>
-          this.getResourceValue(hex.resource) * this.getRollNumValue(hex, 0.5));
+          this.getResourceValue(hex.resource) * this.getRollNumValue(hex.rollNumber, nextNumDots));
+
+      // If balanceCoastAndDesert is set, pretend like the corner always has 3 resourced hexes where
+      // the rollNumber is an average roll number.
+      if (balanceCoastAndDesert) {
+        const nonDesertHexes = hexes.filter(h => h.resource !== ResourceType.DESERT);
+        if (nonDesertHexes.length < 3) {
+          score += (3 - nonDesertHexes.length) *
+              this.getResourceValue(ResourceType.BRICK) * this.getRollNumValue(4, nextNumDots);
+        }
+      }
       const notes = [];
       if (corner.port) {
         // TODO: Think about this more. Maybe a ? port should get less weight.
@@ -247,14 +256,8 @@ export class BalancedStrategy implements Strategy {
       // Evaluate the hex's resource and roll number.
       const hexMultiplier =
           Math.pow(this.getResourceValue(hex.resource) *
-                   this.getRollNumValue(hex, 1), 0.25);
-      // If the hex is on a beach, then sumOfCorners will inevitably be smaller, resulting in a
-      // smaller score. The beachMultipler lessens this effect. Leaving this value out will actually
-      // make the board more balanced, but it also means that almost all of the red numbers are on
-      // a beach.
-      // const beachMultiplier = Math.pow(6 / hex.getNeighbors().length, 0.1);
-      const beachMultiplier = 1;
-      hex.score = sumOfCorners * hexMultiplier * beachMultiplier;
+                   this.getRollNumValue(hex.rollNumber, 0), nextNumDots);
+      hex.score = sumOfCorners * hexMultiplier;
     }
   }
 
@@ -264,7 +267,7 @@ export class BalancedStrategy implements Strategy {
       if (hex.resource === ResourceType.DESERT) {
         continue;
       }
-      let num = this.getRollNumValue(hex, defaultRollScore);
+      let num = this.getRollNumValue(hex.rollNumber, defaultRollScore);
       if (map.has(hex.resource)) {
         num += map.get(hex.resource);
       }
@@ -298,8 +301,8 @@ export class BalancedStrategy implements Strategy {
     }
   }
 
-  private getRollNumValue(hex: Hex, missingValue = 0): number {
-    return hex.rollNumber ? Math.pow(getNumDots(hex.rollNumber), 1.2) : missingValue;
+  private getRollNumValue(rollNumber: number, missingValue = 0): number {
+    return rollNumber ? getNumDots(rollNumber) : missingValue;
   }
 
   /**
