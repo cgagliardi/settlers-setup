@@ -103,16 +103,16 @@ interface AnimationConfig {
   totalDuration?: number;
 }
 const HEX_ANIM_CONFIG = {
-  duration: 0.25,
-  offsetDuration: 0.03,
+  duration: 0.2,
+  offsetDuration: 0.023,
   distance: -30,
   animateOpacity: false,
 };
 const ROLL_NUM_ANIM_CONFIG = {
-  duration: 0.22,
-  offsetDuration: 0.03,
+  duration: 0.2,
+  offsetDuration: 0.02,
   distance: 20,
-  animateOpacity: true,
+  animateOpacity: false,
 };
 
 @Component({
@@ -415,14 +415,14 @@ export class CatanBoardComponent implements OnChanges {
     this.hexAnimConfig = _.clone(HEX_ANIM_CONFIG);
     // If this is during page-load, then wait a little bit before starting the animation. Otherwise
     // most frames will be dropped.
-    this.hexAnimConfig.startTime = firstRenderComplete ? 0.1 : 0.5;
+    this.hexAnimConfig.startTime = firstRenderComplete ? 0.05 : 0.5;
     this.calculateTotalDuration(this.hexAnimConfig);
 
     this.rollNumAnimConfig = _.clone(ROLL_NUM_ANIM_CONFIG);
     // Start the rollNum animtions part of the way through the hex animations.
     this.rollNumAnimConfig.startTime =
         this.hexAnimConfig.startTime +
-        this.hexAnimConfig.offsetDuration * this.hexItems.length * 0.4;
+        this.hexAnimConfig.offsetDuration * this.hexItems.length * 0.6;
     this.calculateTotalDuration(this.rollNumAnimConfig);
 
     this.project.view.onFrame = this.handleFrame.bind(this);
