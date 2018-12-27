@@ -2,6 +2,7 @@ import { Component, OnInit, Input, ViewChild, OnChanges, ElementRef } from '@ang
 import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach, Port, getNumDots } from '../board/board';
 import { PaperScope, Project, Path, Point, PointText, TextItem, Group, Item, Shape } from 'paper';
 import { assert } from '../util/assert';
+import * as bezier from 'bezier-easing';
 import { preserveWhitespacesDefault } from '@angular/compiler';
 import * as _ from 'lodash';
 
@@ -80,6 +81,41 @@ interface SizeAndScale {
   scale: number;
 }
 
+// Animation configuartion.
+const easeOut = bezier(0.165, 0.84, 0.44, 1);
+let firstRenderComplete = false;
+
+// Describes how a list of items should be animated.
+interface AnimationConfig {
+  // The animation duration in seconds of a single item.
+  duration: number;
+  // The duration between the start of each item's animation.
+  offsetDuration: number;
+  // The Y distance the item should travel from its final position.
+  distance: number;
+  // If true, the opacity will be animated in.
+  animateOpacity: boolean;
+
+  // These values describe the animation of all of the items, and can be dependent on the size of
+  // the board.
+  // The time in seconds that the first animation should start.
+  startTime?: number;
+  // The time in seconds that the entire animation should end (includes startTime).
+  totalDuration?: number;
+}
+const HEX_ANIM_CONFIG = {
+  duration: 0.25,
+  offsetDuration: 0.03,
+  distance: -30,
+  animateOpacity: false,
+};
+const ROLL_NUM_ANIM_CONFIG = {
+  duration: 0.22,
+  offsetDuration: 0.03,
+  distance: 20,
+  animateOpacity: true,
+};
+
 @Component({
   selector: 'app-catan-board',
   templateUrl: './catan-board.component.html',
@@ -95,6 +131,13 @@ export class CatanBoardComponent implements OnChanges {
   private showStats = !!location.search.match(/(\?|&)debug=[^&]+/);
   private sizeAndScale: SizeAndScale;
 
+  private hexItems: Item[];
+  private rollNumItems: Array<Item|null>;
+  private finalHexYs: number[];
+  private hexAnimConfig: AnimationConfig;
+  private rollNumAnimConfig: AnimationConfig;
+  private animationComplete: boolean;
+
   constructor() {
     this.scope = new PaperScope();
   }
@@ -109,16 +152,16 @@ export class CatanBoardComponent implements OnChanges {
     this.drawBoard();
   }
 
-  onResize(event) {
+  onResize() {
     const sizeAndScale = this.calculateDimensions();
     if (this.sizeAndScale.width === sizeAndScale.width) {
       return;
     }
     this.sizeAndScale = sizeAndScale;
-    this.drawBoard();
+    this.drawBoard(true /* skipAnimation */);
   }
 
-  drawBoard() {
+  drawBoard(skipAnimation = false) {
     const canvasEl = this.canvas.nativeElement;
     canvasEl.width = this.sizeAndScale.width;
     canvasEl.height = this.sizeAndScale.height;
@@ -133,14 +176,35 @@ export class CatanBoardComponent implements OnChanges {
       this.renderBeach(beach);
     }
 
-    for (const hex of this.board.hexes) {
-      this.renderHex(hex);
+    // The hexes & rollNumbers are rendered in a random order so that they can be animated in
+    // randomly.
+    let placementOrder = [];
+    for (let i = 0; i < this.board.hexes.length; i++) {
+      placementOrder.push(i);
+    }
+    placementOrder = _.shuffle(placementOrder);
+
+    this.hexItems = [];
+    this.rollNumItems = [];
+    this.finalHexYs = [];
+    for (const i of placementOrder) {
+      const hex = this.board.hexes[i];
+      const [item, rollNumber] = this.renderHex(hex);
+      this.hexItems.push(item);
+      this.rollNumItems.push(rollNumber);
+      this.finalHexYs.push(item.position.y);
     }
 
     if (this.showStats) {
       for (const corner of this.board.corners) {
         this.renderCorner(corner);
       }
+    }
+
+    if (skipAnimation) {
+      this.project.view.onFrame = function() {};
+    } else {
+      this.configureAnimation();
     }
   }
 
@@ -149,7 +213,6 @@ export class CatanBoardComponent implements OnChanges {
     const fullWidth = dims.width * HEX_DIMS.width + BOARD_OFFSET.x * 2;
     const fullHeight = dims.height * (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT)
         + HEX_CORNER_HEIGHT + BOARD_OFFSET.y * 2;
-    // debugger;
 
     const containerWidth = this.container.nativeElement.clientWidth;
     const ratio = containerWidth >= fullWidth ? 1 :
@@ -161,7 +224,7 @@ export class CatanBoardComponent implements OnChanges {
     };
   }
 
-  private renderHex(hex: Hex): Item {
+  private renderHex(hex: Hex): [Item, Item|null] {
     const scale = this.sizeAndScale.scale;
     const group = new Group();
 
@@ -180,13 +243,6 @@ export class CatanBoardComponent implements OnChanges {
 
     group.addChild(path);
 
-    if (hex.rollNumber) {
-      const rollNum = this.renderRollNumber(hex.rollNumber);
-      rollNum.position.x = HEX_DIMS.width /  2 * scale;
-      rollNum.position.y = HEX_DIMS.height /  2 * scale;
-      group.addChild(rollNum);
-    }
-
     if (this.showStats) {
       const score = this.renderText(_.round(hex.score, 1) + '',
           new Point(HEX_DIMS.width /  2 * scale, 18 * scale));
@@ -198,6 +254,13 @@ export class CatanBoardComponent implements OnChanges {
       ((HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * hex.y + BOARD_OFFSET.y + HEX_DIMS.height / 2)
           * scale);
 
+    // rollNumItem is not attatched to the group so that it can be animated separately.
+    let rollNumItem = null;
+    if (hex.rollNumber) {
+      rollNumItem = this.renderRollNumber(hex.rollNumber);
+      rollNumItem.position = group.position.clone();
+    }
+
     if (this.showStats) {
       group.onClick = () => {
         const details = {x: hex.x, y: hex.y, score: hex.score};
@@ -205,7 +268,7 @@ export class CatanBoardComponent implements OnChanges {
       };
     }
 
-    return group;
+    return [group, rollNumItem];
   }
 
   private renderRollNumber(rollNum: number): Item {
@@ -341,5 +404,65 @@ export class CatanBoardComponent implements OnChanges {
     label.fillColor = opts.color || 'black';
     label.justification = 'center';
     return label;
+  }
+
+
+
+  // ===================================================================
+  //  Animation Logic
+  // ===================================================================
+  private configureAnimation() {
+    this.animationComplete = false;
+    this.hexAnimConfig = _.clone(HEX_ANIM_CONFIG);
+    // If this is during page-load, then wait a little bit before starting the animation. Otherwise
+    // most frames will be dropped.
+    this.hexAnimConfig.startTime = firstRenderComplete ? 0.1 : 0.5;
+    this.calculateTotalDuration(this.hexAnimConfig);
+
+    this.rollNumAnimConfig = _.clone(ROLL_NUM_ANIM_CONFIG);
+    // Start the rollNum animtions part of the way through the hex animations.
+    this.rollNumAnimConfig.startTime =
+        this.hexAnimConfig.startTime +
+        this.hexAnimConfig.offsetDuration * this.hexItems.length * 0.4;
+    this.calculateTotalDuration(this.rollNumAnimConfig);
+
+    this.project.view.onFrame = this.handleFrame.bind(this);
+    this.handleFrame({count: 0, time: 0, delta: 0});
+
+    firstRenderComplete = true;
+  }
+
+  private handleFrame(event: {count: number, time: number, delta: number}) {
+    if (this.animationComplete) {
+      return;
+    }
+
+    for (let i = 0; i < this.hexItems.length; i++) {
+      const finalY = this.finalHexYs[i];
+      this.animateItem(event.time, this.hexItems[i], i, finalY, this.hexAnimConfig);
+      this.animateItem(event.time, this.rollNumItems[i], i, finalY, this.rollNumAnimConfig);
+    }
+
+    if (event.time > this.rollNumAnimConfig.totalDuration) {
+      this.animationComplete = true;
+    }
+  }
+
+  private animateItem(frameTime: number, item: Item|null, index: number, finalY: number,
+                      config: AnimationConfig) {
+    if (!item) {
+      return;
+    }
+    const initialTime =  index * config.offsetDuration + (config.startTime || 0);
+    const animPerc = Math.max(0, Math.min((frameTime - initialTime) / config.duration, 1));
+    const animEased = easeOut(animPerc);
+    item.opacity = config.animateOpacity ? animEased : (animPerc ? 1 : 0);
+    item.position.y = finalY + ((1 - animEased) * config.distance);
+  }
+
+  private calculateTotalDuration(config: AnimationConfig) {
+    assert(config.startTime !== undefined);
+    config.totalDuration =
+        config.startTime + config.duration + config.offsetDuration * this.hexItems.length;
   }
 }

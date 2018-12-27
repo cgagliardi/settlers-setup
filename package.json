@@ -23,6 +23,7 @@
     "@angular/platform-browser-dynamic": "^6.1.0",
     "@angular/router": "^6.1.0",
     "@types/paper": "^0.11.1",
+    "bezier-easing": "^2.1.0",
     "core-js": "^2.5.4",
     "lodash": "^4.17.11",
     "npm": "^6.4.1",
