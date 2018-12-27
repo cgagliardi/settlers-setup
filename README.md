@@ -1,5 +1,7 @@
 # Settlers Setup
 
+**Looking to use Settlers Setup? Visit [settlerssetup.com](https://www.settlerssetup.com/)**
+
 Settlers Setup attempts to create "balanced" Settlers of Catan boards. Balanced means that resources are evenly distributed across the board, and the roll numbers are distributed to minimze the extremely good and board corners of the board.
 
 Settlers Setup is in no way affiliated with Mayfair Games or Klaus Teuber, of whom Settlers of Catan is a registered trademark.
