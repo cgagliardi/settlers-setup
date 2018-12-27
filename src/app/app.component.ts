@@ -1,8 +1,8 @@
 import { Component, ElementRef, ViewChild, OnInit, HostBinding } from '@angular/core';
 import { Board, GameStyle } from './board/board';
 import { BOARD_SPECS, BoardShape } from './board/board-specs';
-import { SettlersConfig, BoardConfigComponent } from './board-config/board-config.component';
-import { SlidingCardComponent } from './sliding-card/sliding-card.component';
+import { SettlersConfig, BoardConfigComponent } from './components/board-config/board-config.component';
+import { SlidingCardComponent } from './components/sliding-card/sliding-card.component';
 import * as _ from 'lodash';
 
 const BOARD_SPEC = BOARD_SPECS[BoardShape.STANDARD];

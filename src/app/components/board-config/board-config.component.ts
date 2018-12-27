@@ -1,9 +1,9 @@
 import { Component, OnInit, EventEmitter, Output, Input, OnChanges, ElementRef, ViewChild } from '@angular/core';
-import { GameStyle, Board, BoardSpec } from '../board/board';
-import { BoardShape, BOARD_SPECS } from '../board/board-specs';
-import { BalancedStrategy } from '../board/strategy/balanced-strategy';
-import { RandomStrategy } from '../board/strategy/random-strategy';
-import { Strategy, StrategyConstructor } from '../board/strategy/strategy';
+import { GameStyle, Board, BoardSpec } from '../../board/board';
+import { BoardShape, BOARD_SPECS } from '../../board/board-specs';
+import { BalancedStrategy } from '../../board/strategy/balanced-strategy';
+import { RandomStrategy } from '../../board/strategy/random-strategy';
+import { Strategy, StrategyConstructor } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 
 export interface FormState {

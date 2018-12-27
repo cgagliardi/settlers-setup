@@ -1,9 +1,8 @@
 import { Component, OnInit, Input, ViewChild, OnChanges, ElementRef } from '@angular/core';
-import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach, Port, getNumDots } from '../board/board';
+import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach, Port, getNumDots } from '../../board/board';
 import { PaperScope, Project, Path, Point, PointText, TextItem, Group, Item, Shape } from 'paper';
-import { assert } from '../util/assert';
+import { assert } from '../../util/assert';
 import * as bezier from 'bezier-easing';
-import { preserveWhitespacesDefault } from '@angular/compiler';
 import * as _ from 'lodash';
 
 
