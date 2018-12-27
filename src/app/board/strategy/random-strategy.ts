@@ -1,11 +1,11 @@
 import { Board, BoardSpec, ResourceType, GameStyle } from '../board';
-import { Strategy } from './strategy';
+import { Strategy, StrategyOptions } from './strategy';
 import { RandomQueue } from '../random-queue';
 
 export class RandomStrategy implements Strategy {
   readonly name = 'Random';
 
-  constructor(gameStyle: GameStyle) {}
+  constructor(options: StrategyOptions) {}
 
   generateBoard(spec: BoardSpec): Board {
     const board = new Board(spec);

@@ -1,5 +1,17 @@
 import { Board, BoardSpec, GameStyle } from '../board';
 
+export enum DesertPlacement {
+  RANDOM = 'Random',
+  CENTER = 'Center',
+  OFF_CENTER = 'Off Center',
+  COAST = 'Coast',
+}
+
+export interface StrategyOptions {
+  gameStyle: GameStyle;
+  desertPlacement: DesertPlacement;
+}
+
 /**
  * A strategy for creating a catan board.
  */
@@ -9,5 +21,5 @@ export interface Strategy {
 }
 
 export interface StrategyConstructor {
-  new (gameStyle: GameStyle): Strategy;
+  new (options: StrategyOptions): Strategy;
 }

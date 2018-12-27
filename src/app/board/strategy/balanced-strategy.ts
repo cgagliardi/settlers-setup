@@ -1,5 +1,5 @@
-import { Board, BoardSpec, ResourceType, Hex, getNumDots, GameStyle, USABLE_RESOURCES } from '../board';
-import { Strategy } from './strategy';
+import { Board, BoardSpec, ResourceType, Hex, getNumDots, GameStyle, USABLE_RESOURCES, Coordinate } from '../board';
+import { Strategy, StrategyOptions, DesertPlacement } from './strategy';
 import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
@@ -8,22 +8,28 @@ import { findAllLowestBy, findLowestBy, hasAll, sumByKey, findHighestBy } from '
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
 
+  private desertPlacement: DesertPlacement;
+
   private remainingHexes: Hex[];
   private remainingNumbers: number[];
   private remainingResources: RandomQueue<ResourceType>;
   private board: Board;
-  private initialResources: ResourceType[];
+  private initialResources: RandomQueue<ResourceType>;
 
-  constructor(readonly gameStyle: GameStyle) {}
+  constructor(readonly options: StrategyOptions) {}
 
   generateBoard(spec: BoardSpec): Board {
+    // Because we randomly generate N boards and pick the best one, the scoring can bias towards a
+    // specific desert placement. To counteract this, we decide the desert placement up front.
+    this.desertPlacement = this.choseDesertPlacement();
+
     // The algorithm in this class isn't great. So to compensate, we genrate 20 boards, and return
     // the best one.
-    let bestBoard;
+    let bestBoard: Board;
     let lowestScore = Number.MAX_VALUE;
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 25; i++) {
       const board = this.generateSingleBoard(spec);
-      const score = this.evaluateBoard(board);
+      const score = this.scoreBoard(board);
       if (lowestScore > score) {
         bestBoard = board;
         lowestScore = score;
@@ -37,7 +43,7 @@ export class BalancedStrategy implements Strategy {
    * @returns A number that gives the quality of the board, where the lower the number, the better
    * the board.
    */
-  private evaluateBoard(board: Board): number {
+  private scoreBoard(board: Board): number {
     const relevantCorners = board.corners.filter(corner => {
       const hexes = corner.getHexes();
       return hexes.length === 3 && !hexes.find(hex => hex.resource === ResourceType.DESERT);
@@ -50,13 +56,16 @@ export class BalancedStrategy implements Strategy {
   private generateSingleBoard(spec: BoardSpec): Board {
     // Place all of the resource hexes. This function can fail, so its run in a loop until it
     // succeeds. Place hexes also places a few roll numbers.
-    let board;
+    let board: Board;
     do {
-      // TODO - board construction is expensive. Implement a way to reset resources.
       this.remainingNumbers = _.sortBy(spec.rollNumbers(), n => getNumDots(n));
       this.remainingResources = new RandomQueue(spec.resources());
-      this.initialResources = USABLE_RESOURCES.slice();
-      board = new Board(spec);
+      this.initialResources = new RandomQueue(USABLE_RESOURCES);
+      if (!board) {
+        board = new Board(spec);
+      } else {
+        board.reset();
+      }
     } while (!this.placeHexes(board));
 
     this.board = board;
@@ -69,7 +78,7 @@ export class BalancedStrategy implements Strategy {
     while (this.remainingHexes.length) {
       this.placeNumber();
     }
-    this.scoreBoard();
+    this.scoreHexesAndCorners();
 
     return board;
   }
@@ -79,27 +88,40 @@ export class BalancedStrategy implements Strategy {
    * the algorithm.
    */
   private placeHexes(board: Board): boolean {
-    // First place one of each resource and a corresponding high number such that each of these
+    // First place the desert.
+    this.placeDesert(board);
+
+    // Next ensure that there's at least 1 red roll number that is inland.
+    // Without this part, it's common that all red numbers are coastal, and that's less fun.
+    const inlandHex = _.sample(board.hexes.filter(h => !h.resource && !isCoastal(h)));
+    inlandHex.resource = this.initialResources.pop();
+    inlandHex.rollNumber = this.remainingNumbers.pop();
+
+    // Next place one of each resource and a corresponding high number such that each of these
     // high numbers are not touching each other. This ensures every resource has at least one
     // good roll number.
-    for (const resource of this.initialResources) {
+    let resource: ResourceType;
+    while (resource = this.initialResources.pop()) {
       const availableHexes = board.hexes.filter(h =>
+          !h.resource &&
           !h.getPortResources().includes(resource) &&
           !h.getNeighbors().find(neighbor => !!neighbor.resource));
+      if (!availableHexes.length) {
+        return false;
+      }
       const hex = _.sample(availableHexes);
       hex.resource = resource;
       hex.rollNumber = this.remainingNumbers.pop();
       this.remainingResources.remove(resource);
     }
 
-    // Next set the resources on hexes with typed ports such that they don't get a desert and don't
-    // have their matching resource.
+    // Next set the resources on hexes with typed ports such that they don'tvhave their matching
+    // resource.
     const hexesWithTypedPorts = board.hexes.filter(hex =>
         !hex.resource &&
         hex.getPortResources().filter(r => r !== ResourceType.ANY).length);
     for (const hex of hexesWithTypedPorts) {
       const excludeResources = hex.getNeighbors().map(h => h.resource).map(r => r);
-      excludeResources.push(ResourceType.DESERT);
       excludeResources.push(...hex.getPortResources());
       hex.resource = this.remainingResources.popExcluding(...excludeResources);
     }
@@ -111,7 +133,7 @@ export class BalancedStrategy implements Strategy {
       if (hex.resource) {
         continue;
       }
-      const resource = this.remainingResources.popExcluding(
+      resource = this.remainingResources.popExcluding(
           ...hex.getNeighbors().map(h => h.resource).map(r => r));
       if (!resource) {
         return false;
@@ -121,12 +143,58 @@ export class BalancedStrategy implements Strategy {
     return true;
   }
 
+  placeDesert(board: Board) {
+    if (this.desertPlacement === DesertPlacement.CENTER) {
+      const coords = this.getCenterCoords(board);
+      for (const coord of coords) {
+        this.remainingResources.remove(ResourceType.DESERT);
+        board.hexGrid[coord.y][coord.x].resource = ResourceType.DESERT;
+      }
+      assert(this.remainingResources.filterBy(ResourceType.DESERT).isEmpty());
+    }
+
+    let availableHexes: Hex[];
+    switch (this.desertPlacement) {
+      case DesertPlacement.RANDOM:
+        // Don't put the desert on a hex that has a 2 typed ports.
+        availableHexes = board.hexes.filter(hex => !has2TypedPorts(hex));
+        break;
+
+      case DesertPlacement.OFF_CENTER:
+        const centerCoords = this.getCenterCoords(board);
+        availableHexes = board.hexes.filter(hex =>
+            !isCoastal(hex) && !centerCoords.find(c => hex.hasCoordinate(c)));
+        break;
+
+      case DesertPlacement.COAST:
+        availableHexes = board.hexes.filter(hex =>
+            isCoastal(hex) && !has2TypedPorts(hex));
+        break;
+    }
+
+    while (this.remainingResources.remove(ResourceType.DESERT)) {
+      const hex = _.sample(availableHexes);
+      hex.resource = ResourceType.DESERT;
+    }
+  }
+
+  private getCenterCoords(board: Board): Coordinate[] {
+    const width = board.dimensions.width;
+    const y = Math.floor(board.dimensions.height / 2);
+    if (width % 2 === 0) {
+      const half = width / 2 + 1;
+      return [{x: half, y}, {x: half + 2, y}];
+    } else {
+      return [{x: Math.ceil(width / 2) + 1, y}];
+    }
+  }
+
   /**
    * Scores every corner and every hex of the board, then places the highest available number of the
    * lowest valued hex.
    */
   private placeNumber() {
-    this.scoreBoard();
+    this.scoreHexesAndCorners();
 
     const hex = _.sample(findAllLowestBy(this.remainingHexes, h => h.score));
     _.pull(this.remainingHexes, hex);
@@ -139,7 +207,7 @@ export class BalancedStrategy implements Strategy {
    * at that corner and the presence of a port. Then computes the value of each hex but summing the
    * corners of that hex.
    */
-  private scoreBoard() {
+  private scoreHexesAndCorners() {
     const nextNumDots = this.remainingNumbers.length ?
         getNumDots(_.last(this.remainingNumbers)) : 0;
 
@@ -167,7 +235,7 @@ export class BalancedStrategy implements Strategy {
       };
       addCombo('City', 3, ResourceType.WHEAT, ResourceType.ORE);
       addCombo('Road', 2.5, ResourceType.BRICK, ResourceType.WOOD);
-      if (this.gameStyle === GameStyle.STANDARD) {
+      if (this.options.gameStyle === GameStyle.STANDARD) {
         addCombo('Development card', 1, ResourceType.SHEEP, ResourceType.ORE, ResourceType.WHEAT);
       }
       corner.notes = notes.join('\n');
@@ -210,7 +278,7 @@ export class BalancedStrategy implements Strategy {
     if (resource === ResourceType.DESERT) {
       return 0;
     }
-    switch (this.gameStyle) {
+    switch (this.options.gameStyle) {
       case GameStyle.CITIES_AND_KNIGHTS:
         switch (resource) {
           case ResourceType.SHEEP:
@@ -233,4 +301,32 @@ export class BalancedStrategy implements Strategy {
   private getRollNumValue(hex: Hex, missingValue = 0): number {
     return hex.rollNumber ? Math.pow(getNumDots(hex.rollNumber), 1.2) : missingValue;
   }
+
+  /**
+   * If the DesertPlaceement is set to RANDOM, picks one of the other options and random and returns
+   * that.
+   */
+  private choseDesertPlacement(): DesertPlacement {
+    if (this.options.desertPlacement === DesertPlacement.RANDOM) {
+      const rand = Math.random();
+      if (rand < 0.2) {
+        return DesertPlacement.CENTER;
+      } else if (rand < 0.6) {
+        return DesertPlacement.COAST;
+      } else {
+        return DesertPlacement.OFF_CENTER;
+      }
+    } else {
+      return this.options.desertPlacement;
+    }
+  }
+}
+
+function has2TypedPorts(hex: Hex): boolean {
+  return hex.getCorners().filter(
+      c => c.port && c.port.resource !== ResourceType.ANY).length === 2;
+}
+
+function isCoastal(hex: Hex): boolean {
+  return hex.getNeighbors().length < 6;
 }

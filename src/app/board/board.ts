@@ -221,11 +221,14 @@ export class Hex {
     }
     return this.portResource;
   }
+
+  hasCoordinate(coord: Coordinate): boolean {
+    return coord.x === this.x && coord.y === this.y;
+  }
 }
 
 
 export class Board {
-  readonly label: string;
   // So the BoardSpec for a description of what this value actually means.
   readonly dimensions: Dimensions;
   // Hexes represents all of the resource hexes on the board, where the indexes
@@ -239,7 +242,6 @@ export class Board {
   private flatCorners: ReadonlyArray<Corner>;
 
   constructor(spec: BoardSpec) {
-    this.label = spec.label;
     this.dimensions = spec.dimensions;
     this.hexGrid = spec.hexes(this);
 
@@ -266,6 +268,14 @@ export class Board {
       }
     }
     return corners;
+  }
+
+  reset() {
+    for (const hex of this.hexes) {
+      hex.resource = null;
+      hex.rollNumber = null;
+      hex.score = 0;
+    }
   }
 
   get hexes(): ReadonlyArray<Hex> {
