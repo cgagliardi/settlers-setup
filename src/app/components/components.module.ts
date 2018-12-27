@@ -13,6 +13,7 @@ import { BoardConfigComponent } from './board-config/board-config.component';
 import { SlidingCardComponent } from './sliding-card/sliding-card.component';
 import { FooterComponent } from './footer/footer.component';
 import { AboutComponent } from './about/about.component';
+import { ConfigChoiceComponent } from './config-choice/config-choice.component';
 
 @NgModule({
   imports: [
@@ -31,6 +32,7 @@ import { AboutComponent } from './about/about.component';
     SlidingCardComponent,
     FooterComponent,
     AboutComponent,
+    ConfigChoiceComponent,
   ],
   exports: [
     CatanBoardComponent,

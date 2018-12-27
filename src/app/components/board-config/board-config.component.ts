@@ -1,8 +1,7 @@
-import { Component, OnInit, EventEmitter, Output, Input, OnChanges, ElementRef, ViewChild } from '@angular/core';
-import { GameStyle, Board, BoardSpec } from '../../board/board';
+import { Component, EventEmitter, Output, Input, OnChanges } from '@angular/core';
+import { GameStyle, BoardSpec } from '../../board/board';
 import { BoardShape, BOARD_SPECS } from '../../board/board-specs';
 import { BalancedStrategy } from '../../board/strategy/balanced-strategy';
-import { RandomStrategy } from '../../board/strategy/random-strategy';
 import { Strategy, StrategyConstructor } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 
@@ -16,20 +15,6 @@ interface OptionDef {
   label: string;
   value: string;
 }
-
-interface StategyOption extends OptionDef {
-  ctor: StrategyConstructor;
-}
-
-const STRATEGY_OPTIONS = [{
-  label: 'Balanced',
-  value: 'balanced',
-  ctor: BalancedStrategy,
-}, {
-  label: 'Random',
-  value: 'random',
-  ctor: RandomStrategy,
-}] as StategyOption[];
 
 export interface SettlersConfig {
   readonly formState: FormState;
@@ -59,12 +44,9 @@ export class BoardConfigComponent implements OnChanges {
     value: GameStyle.CITIES_AND_KNIGHTS,
   }] as OptionDef[];
 
-  strategies = STRATEGY_OPTIONS;
-
   configForm = this.fb.group({
     boardShape: [this.boardShapes[0].value],
     gameStyle: [this.gameStyles[0].value],
-    strategy: [this.strategies[0].value]
   });
 
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
@@ -87,8 +69,7 @@ export class BoardConfigComponent implements OnChanges {
 
   getConfig(): SettlersConfig {
     const state = this.getFormState();
-    const ctor = this.strategies.find(s => s.value === state.strategy).ctor;
-    const strategy = new ctor(state.gameStyle);
+    const strategy = new BalancedStrategy(state.gameStyle);
     return {
       formState: state,
       strategy,

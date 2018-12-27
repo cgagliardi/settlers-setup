@@ -1,0 +1,8 @@
+<h2>{{label}}:</h2>
+<mat-radio-group [value]="value" (change)="handleChange($event)">
+  <div *ngFor="let option of options">
+    <mat-radio-button [value]="option.value" [name]="option.value">
+      {{option.label}}
+    </mat-radio-button>
+  </div>
+</mat-radio-group>
