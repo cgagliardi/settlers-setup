@@ -2,7 +2,6 @@ import { Component, ElementRef, ViewChild, OnInit, HostBinding } from '@angular/
 import { Board, GameStyle } from './board/board';
 import { BOARD_SPECS, BoardShape } from './board/board-specs';
 import { SettlersConfig, BoardConfigComponent } from './board-config/board-config.component';
-import { trigger, state, style, animate, transition } from '@angular/animations';
 import { SlidingCardComponent } from './sliding-card/sliding-card.component';
 import * as _ from 'lodash';
 
@@ -12,62 +11,43 @@ const BOARD_SPEC = BOARD_SPECS[BoardShape.STANDARD];
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  animations: [
-    trigger('toggleConfig', [
-      state('open', style({
-        transform: 'translate3d(0,0,0)',
-      })),
-      state('closed', style({
-        transform: 'translate3d(0,-{{height}}px,0)',
-      }), { params: {height: 0} }),
-      transition('open => closed', [
-        animate('500ms cubic-bezier(0.55, 0.055, 0.675, 0.19)')
-      ]),
-      transition('closed => open', [
-        animate('400ms cubic-bezier(0.215, 0.61, 0.355, 1)')
-      ]),
-    ]),
-  ],
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   @ViewChild('boardConfigSlider') boardConfigSlider: SlidingCardComponent;
   @ViewChild('boardConfig') boardConfig: BoardConfigComponent;
-  configHeight: number;
-  configAnimationState: Object = { value: 'open' };
-  config: SettlersConfig|null = null;
-  configOpen = true;
-  board: Board|null = null;
-  configFormState: Object|null = null;
 
-  handleConfig(config: SettlersConfig) {
-    this.config = config;
-    this.configFormState = this.config.formState;
-    this.createBoard();
-    this.toggleConfigMenu();
+  config: SettlersConfig;
+  board: Board;
+  configFormState: Object;
+
+  ngOnInit() {
+    this.saveConfig(this.boardConfig.getConfig());
   }
 
-  toggleConfigMenu() {
-    this.configOpen = !this.configOpen;
-    if (this.configOpen) {
-      this.configAnimationState = { value: 'open' };
-    } else {
-      const height = this.boardConfigSlider.getHeight();
-      this.configAnimationState = { value: 'closed', params: {height} };
-    }
+  handleConfigUpdate(config: SettlersConfig) {
+    this.boardConfigSlider.toggle();
+    setTimeout(() => {
+      this.saveConfig(config);
+    }, 0);
   }
 
   handleConfigButton() {
     // If the button is pressed while the form is open, only generate a new board if the form has
     // changed since it was closed.
-    if (this.configOpen &&
-        !_.isEqual(this.boardConfig.getFormState(), this.configFormState)) {
+    if (!_.isEqual(this.boardConfig.getFormState(), this.configFormState)) {
       this.boardConfig.emitConfig();
     } else {
-      this.toggleConfigMenu();
+      this.boardConfigSlider.toggle();
     }
   }
 
-  createBoard() {
+  saveConfig(config: SettlersConfig) {
+    this.config = config;
+    this.configFormState = this.config.formState;
+    this.generateBoard();
+  }
+
+  generateBoard() {
     this.board = this.config.strategy.generateBoard(this.config.spec);
   }
 }

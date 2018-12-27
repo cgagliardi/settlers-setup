@@ -85,14 +85,18 @@ export class BoardConfigComponent implements OnChanges {
     return this.configForm.value;
   }
 
-  emitConfig() {
+  getConfig(): SettlersConfig {
     const state = this.getFormState();
     const ctor = this.strategies.find(s => s.value === state.strategy).ctor;
     const strategy = new ctor(state.gameStyle);
-    this.configUpdate.emit({
+    return {
       formState: state,
       strategy,
       spec: BOARD_SPECS[state.boardShape],
-    });
+    };
+  }
+
+  emitConfig() {
+    this.configUpdate.emit(this.getConfig());
   }
 }

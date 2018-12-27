@@ -30,19 +30,6 @@ header {
   }
 }
 
-.config-slider {
-  position: absolute;
-  top: 0px;
-  right: 0;
-  z-index: 5;
-  transform: translate3d(0,0,0);
-  display: block;
-}
-
-.no-board-placeholder {
-  height: 500px;
-}
-
 .board {
   flex-grow: 1;
   padding: $board-padding-topbottom $board-padding-sides;

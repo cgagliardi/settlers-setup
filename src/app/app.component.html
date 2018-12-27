@@ -7,18 +7,15 @@
   Settlers Setup
 </header>
 
-<div class="config-slider" #configSlider
-     [@toggleConfig]="configAnimationState">
-  <app-sliding-card #boardConfigSlider>
-    <app-board-config #boardConfig
-              (configUpdate)="handleConfig($event)"
-              [formState]="configFormState"></app-board-config>
-  </app-sliding-card>
-</div>
-<div *ngIf="!board" class="no-board-placeholder"></div>
-<div *ngIf="board" class="board">
+<app-sliding-card #boardConfigSlider>
+  <app-board-config #boardConfig
+            (configUpdate)="handleConfigUpdate($event)"
+            [formState]="configFormState"></app-board-config>
+</app-sliding-card>
+
+<div class="board">
   <div class="board-button">
-    <button mat-icon-button color="primary" (click)="createBoard()">
+    <button mat-icon-button color="primary" (click)="generateBoard()">
         <mat-icon aria-label="Reset">refresh</mat-icon>
     </button>
   </div>
