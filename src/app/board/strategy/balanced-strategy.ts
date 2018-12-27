@@ -228,9 +228,8 @@ export class BalancedStrategy implements Strategy {
       }
       const notes = [];
       if (corner.port) {
-        // TODO: Think about this more. Maybe a ? port should get less weight.
         notes.push(['Has port']);
-        score += 2;
+        score += 3;
       }
 
       // Look for any good combinations.
