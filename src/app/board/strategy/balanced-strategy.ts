@@ -21,7 +21,7 @@ export class BalancedStrategy implements Strategy {
   generateBoard(spec: BoardSpec): Board {
     // Because we randomly generate N boards and pick the best one, the scoring can bias towards a
     // specific desert placement. To counteract this, we decide the desert placement up front.
-    this.desertPlacement = this.choseDesertPlacement();
+    this.desertPlacement = this.chooseDesertPlacement();
 
     // The algorithm in this class isn't great. So to compensate, we genrate 20 boards, and return
     // the best one.
@@ -306,7 +306,7 @@ export class BalancedStrategy implements Strategy {
    * If the DesertPlaceement is set to RANDOM, picks one of the other options and random and returns
    * that.
    */
-  private choseDesertPlacement(): DesertPlacement {
+  private chooseDesertPlacement(): DesertPlacement {
     if (this.options.desertPlacement === DesertPlacement.RANDOM) {
       const rand = Math.random();
       if (rand < 0.2) {
