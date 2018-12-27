@@ -7,9 +7,15 @@ export enum DesertPlacement {
   COAST = 'Coast',
 }
 
+export enum ResourceDistribution {
+  EVEN = 'Even',
+  RANDOM = 'Random',
+}
+
 export interface StrategyOptions {
   gameStyle: GameStyle;
   desertPlacement: DesertPlacement;
+  resourceDistribution: ResourceDistribution;
 }
 
 /**

@@ -222,6 +222,13 @@ export class Hex {
     return this.portResource;
   }
 
+  /**
+   * @returns The resource types of the neighboring hexes.
+   */
+  getNeighborResources(): ResourceType[] {
+    return this.getNeighbors().map(h => h.resource).map(r => r).filter(r => r);
+  }
+
   hasCoordinate(coord: Coordinate): boolean {
     return coord.x === this.x && coord.y === this.y;
   }

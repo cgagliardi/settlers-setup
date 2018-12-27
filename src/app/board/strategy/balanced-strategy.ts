@@ -1,5 +1,5 @@
 import { Board, BoardSpec, ResourceType, Hex, getNumDots, GameStyle, USABLE_RESOURCES, Coordinate } from '../board';
-import { Strategy, StrategyOptions, DesertPlacement } from './strategy';
+import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution } from './strategy';
 import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
@@ -114,14 +114,16 @@ export class BalancedStrategy implements Strategy {
       this.remainingResources.remove(resource);
     }
 
-    // Next set the resources on hexes with typed ports such that they don'tvhave their matching
+    // Next set the resources on hexes with typed ports such that they don't have their matching
     // resource.
     const hexesWithTypedPorts = board.hexes.filter(hex =>
         !hex.resource &&
         hex.getPortResources().filter(r => r !== ResourceType.ANY).length);
     for (const hex of hexesWithTypedPorts) {
-      const excludeResources = hex.getNeighbors().map(h => h.resource).map(r => r);
-      excludeResources.push(...hex.getPortResources());
+      const excludeResources = hex.getPortResources();
+      if (this.options.resourceDistribution === ResourceDistribution.EVEN) {
+        excludeResources.push(...hex.getNeighborResources());
+      }
       hex.resource = this.remainingResources.popExcluding(...excludeResources);
     }
 
@@ -132,10 +134,14 @@ export class BalancedStrategy implements Strategy {
       if (hex.resource) {
         continue;
       }
-      resource = this.remainingResources.popExcluding(
-          ...hex.getNeighbors().map(h => h.resource).map(r => r));
-      if (!resource) {
-        return false;
+      if (this.options.resourceDistribution === ResourceDistribution.EVEN) {
+        resource = this.remainingResources.popExcluding(...hex.getNeighborResources());
+        if (!resource) {
+          return false;
+        }
+      } else {
+        // resourceDistribution === ResourceDistribution.RANDOM
+        resource = this.remainingResources.pop();
       }
       hex.resource = resource;
     }
