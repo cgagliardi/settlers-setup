@@ -2,11 +2,10 @@
 
 **Looking to use Settlers Setup? Visit [settlerssetup.com](https://www.settlerssetup.com/)**
 
-Settlers Setup attempts to create "balanced" Settlers of Catan boards. Balanced means that resources are evenly distributed across the board, and the roll numbers are distributed to minimze the extremely good and board corners of the board.
+Settlers Setup attempts to create "balanced" Settlers of Catan boards. Balanced means that resources are evenly distributed across the board, and the roll numbers are distributed to such that
+each corner is as close in value to other corners as possible.
 
 Settlers Setup is in no way affiliated with Mayfair Games or Klaus Teuber, of whom Settlers of Catan is a registered trademark.
-
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.2.4.
 
 ## The code
 
@@ -15,7 +14,7 @@ are in `src/app/board/`. This directory does not have any Angular specific depen
 
 The standard and expansion boards are defined in `src/app/board/board-specs.ts`. In order to add support for Seafarers, a number of changes would be required in `board.ts` and the rendering code `catan-board.component.ts`, which makes several assumptions about the standard hex shape of the board.
 
-All of the rendering is done in `src/app/catan-board/catan-board.component.ts`.
+All of the rendering is done in `src/app/components/catan-board/catan-board.component.ts`.
 
 ## Debugging
 
