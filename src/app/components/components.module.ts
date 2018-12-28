@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { CatanBoardComponent } from './catan-board/catan-board.component';
 import { BoardConfigComponent } from './board-config/board-config.component';
@@ -22,6 +23,7 @@ import { ConfigChoiceComponent } from './config-choice/config-choice.component';
     MatDialogModule,
     MatRadioModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatIconModule,
     MatCardModule,
     ReactiveFormsModule,

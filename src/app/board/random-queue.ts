@@ -20,7 +20,9 @@ export class RandomQueue<T> {
    */
   constructor(
     initial?: ReadonlyArray<T>|RandomQueue<T>) {
-    if (initial instanceof RandomQueue) {
+    if (initial === undefined) {
+      this.vals = [];
+    } else if (initial instanceof RandomQueue) {
       this.vals = initial.vals.slice();
     } else {
       this.vals = initial.slice();

@@ -16,6 +16,10 @@
                      formControlName="resourceDistribution"
                      [options]="resourceDistributions"></app-config-choice>
 
+  <div class="checkbox">
+    <mat-checkbox formControlName="shufflePorts">Shuffle ports</mat-checkbox>
+  </div>
+
   <button mat-raised-button color="accent"
           type="submit">Generate</button>
 </form>

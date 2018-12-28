@@ -10,6 +10,7 @@ export interface FormState {
   boardShape: BoardShape;
   desertPlacement: DesertPlacement;
   resourceDistribution: ResourceDistribution;
+  shufflePorts: boolean;
 }
 
 interface OptionDef {
@@ -65,6 +66,7 @@ export class BoardConfigComponent implements OnChanges {
     gameStyle: [this.gameStyles[0].value],
     desertPlacement: [this.desertPlacements[0].value],
     resourceDistribution: [this.resourceDistributions[0].value],
+    shufflePorts: false,
   });
 
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
@@ -92,6 +94,7 @@ export class BoardConfigComponent implements OnChanges {
           gameStyle: state.gameStyle,
           desertPlacement: state.desertPlacement,
           resourceDistribution: state.resourceDistribution,
+          shufflePorts: state.shufflePorts,
         });
     return {
       formState: state,

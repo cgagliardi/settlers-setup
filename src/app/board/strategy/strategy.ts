@@ -1,4 +1,5 @@
-import { Board, BoardSpec, GameStyle } from '../board';
+import { Board, BoardSpec, GameStyle, ResourceType } from '../board';
+import { RandomQueue } from '../random-queue';
 
 export enum DesertPlacement {
   RANDOM = 'Random',
@@ -16,6 +17,7 @@ export interface StrategyOptions {
   gameStyle: GameStyle;
   desertPlacement: DesertPlacement;
   resourceDistribution: ResourceDistribution;
+  shufflePorts: boolean;
 }
 
 /**
@@ -28,4 +30,18 @@ export interface Strategy {
 
 export interface StrategyConstructor {
   new (options: StrategyOptions): Strategy;
+}
+
+export function shufflePorts(board: Board) {
+  const resources = new RandomQueue<ResourceType>();
+  for (const beach of board.beaches) {
+    for (const port of beach.ports) {
+      resources.push(port.resource);
+    }
+  }
+  for (const beach of board.beaches) {
+    for (const port of beach.ports) {
+      port.resource = resources.pop();
+    }
+  }
 }

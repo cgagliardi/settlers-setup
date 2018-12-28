@@ -1,5 +1,5 @@
 import { Board, BoardSpec, ResourceType, Hex, getNumDots, GameStyle, USABLE_RESOURCES, Coordinate } from '../board';
-import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution } from './strategy';
+import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution, shufflePorts } from './strategy';
 import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
@@ -56,18 +56,18 @@ export class BalancedStrategy implements Strategy {
   }
 
   private generateSingleBoard(spec: BoardSpec): Board {
+    const board = new Board(spec);
+    if (this.options.shufflePorts) {
+      shufflePorts(board);
+    }
+
     // Place all of the resource hexes. This function can fail, so its run in a loop until it
     // succeeds. Place hexes also places a few roll numbers.
-    let board: Board;
     do {
       this.remainingNumbers = _.sortBy(spec.rollNumbers(), n => getNumDots(n));
       this.remainingResources = new RandomQueue(spec.resources());
       this.initialResources = new RandomQueue(USABLE_RESOURCES);
-      if (!board) {
-        board = new Board(spec);
-      } else {
-        board.reset();
-      }
+      board.reset();
     } while (!this.placeHexes(board));
 
     this.board = board;
