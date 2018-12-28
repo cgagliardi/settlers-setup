@@ -448,7 +448,7 @@ export class CatanBoardComponent implements OnChanges {
     this.hexAnimConfig = _.clone(HEX_ANIM_CONFIG);
     // If this is during page-load, then wait a little bit before starting the animation. Otherwise
     // most frames will be dropped.
-    this.hexAnimConfig.startTime = firstRenderComplete ? 0.05 : 0.5;
+    this.hexAnimConfig.startTime = firstRenderComplete ? 0.03 : 0.3;
     this.calculateTotalDuration(this.hexAnimConfig);
 
     this.rollNumAnimConfig = _.clone(ROLL_NUM_ANIM_CONFIG);
