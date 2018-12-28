@@ -3,7 +3,9 @@ import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution } from
 import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
-import { findAllLowestBy, findLowestBy, hasAll, sumByKey, findHighestBy } from 'src/app/util/collections';
+import { findAllLowestBy, hasAll, sumByKey } from 'src/app/util/collections';
+
+const NUM_ATTEMPTS = 35;
 
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
@@ -23,11 +25,11 @@ export class BalancedStrategy implements Strategy {
     // specific desert placement. To counteract this, we decide the desert placement up front.
     this.desertPlacement = this.chooseDesertPlacement();
 
-    // The algorithm in this class isn't great. So to compensate, we genrate 20 boards, and return
-    // the best one.
+    // The algorithm in this class isn't great. So to compensate, we genrate NUM_ATTEMPTS boards,
+    // and return the best one.
     let bestBoard: Board;
     let lowestScore = Number.MAX_VALUE;
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < NUM_ATTEMPTS; i++) {
       const board = this.generateSingleBoard(spec);
       const score = this.scoreBoard(board);
       if (lowestScore > score) {
@@ -95,6 +97,7 @@ export class BalancedStrategy implements Strategy {
     const inlandHex = _.sample(board.hexes.filter(h => !h.resource && !isCoastal(h)));
     inlandHex.resource = this.initialResources.pop();
     inlandHex.rollNumber = this.remainingNumbers.pop();
+    this.remainingResources.remove(inlandHex.resource);
 
     // Next place one of each resource and a corresponding high number such that each of these
     // high numbers are not touching each other. This ensures every resource has at least one
@@ -120,11 +123,14 @@ export class BalancedStrategy implements Strategy {
         !hex.resource &&
         hex.getPortResources().filter(r => r !== ResourceType.ANY).length);
     for (const hex of hexesWithTypedPorts) {
-      const excludeResources = hex.getPortResources();
+      const excludeResources = hex.getPortResources().slice();
       if (this.options.resourceDistribution === ResourceDistribution.EVEN) {
         excludeResources.push(...hex.getNeighborResources());
       }
       hex.resource = this.remainingResources.popExcluding(...excludeResources);
+      if (!hex.resource) {
+        return false;
+      }
     }
 
     // Now set all remaining hexes at random, but without any of the same resources touching itself.
@@ -179,6 +185,7 @@ export class BalancedStrategy implements Strategy {
 
     while (this.remainingResources.remove(ResourceType.DESERT)) {
       const hex = _.sample(availableHexes);
+      assert(hex);
       hex.resource = ResourceType.DESERT;
     }
   }

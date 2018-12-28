@@ -163,7 +163,7 @@ export class Hex {
   rollNumber: number|null = null;
   score: number|null = null;
   // Cached values.
-  private portResource: ResourceType[]|undefined;
+  private portResources: ResourceType[]|undefined;
   private neighbors: Hex[]|undefined;
   private corners: Corner[]|undefined;
 
@@ -176,6 +176,13 @@ export class Hex {
       readonly x: number,
       readonly y: number,
       private readonly board: Board) {}
+
+  reset() {
+    this.resource = null;
+    this.rollNumber = null;
+    this.score = null;
+    this.portResources = undefined;
+  }
 
   /**
    * All neighboring hexes on the board.
@@ -214,12 +221,12 @@ export class Hex {
    * @returns The ResourceTypes of the neighboring ports if any such port exists.
    */
   getPortResources(): ResourceType[] {
-    if (!this.portResource) {
+    if (!this.portResources) {
       const resources =
           this.getCorners().filter(corner => !!corner.port).map(corner => corner.port.resource);
-      this.portResource = Array.from(new Set(resources));
+      this.portResources = Array.from(new Set(resources));
     }
-    return this.portResource;
+    return this.portResources;
   }
 
   /**
@@ -279,9 +286,7 @@ export class Board {
 
   reset() {
     for (const hex of this.hexes) {
-      hex.resource = null;
-      hex.rollNumber = null;
-      hex.score = 0;
+      hex.reset();
     }
   }
 
