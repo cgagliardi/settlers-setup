@@ -6,6 +6,9 @@ import * as bezier from 'bezier-easing';
 import * as _ from 'lodash';
 import { findHighestBy, findLowestBy } from 'src/app/util/collections';
 
+// ====== Render Sizing ======
+// Note: the "scale factor" constants are used to slow down or speed up how much the numbers are
+// scaled as they are resized for smaller displays. A smaller number means a larger rendering.
 
 // Stands for grid size. This is also the length of a hex size.
 const HEX_SIDE_HEIGHT = 60;
@@ -13,8 +16,11 @@ const HEX_SIDE_HEIGHT = 60;
 const BEACH_DISTANCE = 60;
 // Distance of border numbers from the border lines.
 const BEACH_NUMBER_DISTANCE = 15;
+const BEACH_SCALE_FACTOR = 1.3;
+const BEACH_TEXT_SCALE_FACTOR = 0.9;
 // The diameter of the circle that shows the roll number.
 const ROLL_NUMBER_SIZE = 25;
+const ROLL_NUM_SCALE_FACTOR = 0.65;
 
 // In order to render a hexegon where every side is the same, we need to figure out the height of
 // the angled lines where the hypotenuse is HEX_SIDE_HEIGHT. An even sided hexagon has 120 degree
@@ -92,6 +98,7 @@ interface TextOpts {
   size?: number;
   color?: string;
   bold?: boolean;
+  scale?: number;
 }
 
 interface SizeAndScale {
@@ -297,7 +304,7 @@ export class CatanBoardComponent implements OnChanges {
   }
 
   private renderRollNumber(rollNum: number): Item {
-    const scale = this.sizeAndScale.scale;
+    const scale = this.adjustScale(ROLL_NUM_SCALE_FACTOR);
     const group = new Group();
 
     const color = rollNum === 6 || rollNum === 8 ? '#D50000' : 'black';
@@ -309,7 +316,8 @@ export class CatanBoardComponent implements OnChanges {
     circle.strokeWidth = 1;
     group.addChild(circle);
 
-    const text = this.renderText(rollNum + '', new Point(0, -2), { color, size: 19, bold: true });
+    const text = this.renderText(rollNum + '', new Point(0, -2),
+                                 { color, size: 20, bold: true, scale });
     group.addChild(text);
 
     const dotsGroup = new Group();
@@ -326,6 +334,9 @@ export class CatanBoardComponent implements OnChanges {
     return group;
   }
 
+  /**
+   * Renders the score at a corner. This is only used for debugging.
+   */
   private renderCorner(corner: Corner, isBest: boolean, isWorst: boolean): Path {
     const scale = this.sizeAndScale.scale;
     const group = new Group();
@@ -354,7 +365,7 @@ export class CatanBoardComponent implements OnChanges {
   }
 
   private renderBeach(beach: Beach) {
-    const scale = this.sizeAndScale.scale;
+    const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     // Start with the points along the board.
     const beachPoints = beach.corners.map(c => this.getCornerPoint(c));
     const points = beachPoints.slice();
@@ -392,18 +403,20 @@ export class CatanBoardComponent implements OnChanges {
   }
 
   private renderBeachNumber(value: number, beachPoint: Point, outerPoint: Point, first: boolean) {
-    const scale = this.sizeAndScale.scale;
+    const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     let point = averagePoints(beachPoint, outerPoint);
     point = getPointFromLine(point, outerPoint, first ? -90 : 90, BEACH_NUMBER_DISTANCE * scale);
-    this.renderText(value + '', point);
+    const textScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
+    this.renderText(value + '', point, { scale: textScale });
   }
 
   private renderPort(port: Port) {
-    const scale = this.sizeAndScale.scale;
+    const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     const portPoints = port.corners.map(c => this.getCornerPoint(c));
     const iconPoint = getPointFromLine(portPoints[0], portPoints[1], 120, HEX_SIDE_HEIGHT * scale);
-
-    this.renderText(port.resource, iconPoint, {bold: true, color: getColor(port.resource)});
+    const textScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
+    this.renderText(port.resource, iconPoint,
+        {bold: true, color: getColor(port.resource), scale: textScale});
 
     portPoints.forEach(portPoint => {
       const line = new Path([portPoint, averagePoints(portPoint, iconPoint)]);
@@ -424,7 +437,7 @@ export class CatanBoardComponent implements OnChanges {
   // Renders text centered over a point.
   private renderText(content: string, center: Point, opts: TextOpts = {}) {
     let size = opts.size || 12;
-    size *= this.sizeAndScale.scale;
+    size *= opts.scale || this.sizeAndScale.scale;
     const textPoint = new Point(center);
     textPoint.y += size / 2;
     const label = new PointText(textPoint);
@@ -496,5 +509,9 @@ export class CatanBoardComponent implements OnChanges {
     assert(config.startTime !== undefined);
     config.totalDuration =
         config.startTime + config.duration + config.offsetDuration * this.hexItems.length;
+  }
+
+  private adjustScale(factor: number): number {
+    return Math.pow(this.sizeAndScale.scale, factor);
   }
 }

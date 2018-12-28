@@ -2,7 +2,7 @@
 
 $button-padding: 20px;
 $board-padding-topbottom: 10px;
-$board-padding-sides: 5px;
+$board-padding-sides: 0px;
 
 :host {
   height: 100%;
@@ -38,6 +38,6 @@ header {
   .board-button {
     position: absolute;
     top: 0;
-    right: $button-padding - $board-padding-sides + 6px;
+    right: $button-padding - $board-padding-sides + 1px;
   }
 }
