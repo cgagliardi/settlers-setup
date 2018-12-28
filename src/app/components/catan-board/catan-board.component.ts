@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, ViewChild, OnChanges, ElementRef } from '@angular/core';
 import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach, Port, getNumDots } from '../../board/board';
-import { PaperScope, Project, Path, Point, PointText, TextItem, Group, Item, Shape } from 'paper';
+import { PaperScope, Project, Path, Point, PointText, TextItem, Group, Item, Shape, Color, GradientStop, Gradient } from 'paper';
 import { assert } from '../../util/assert';
 import * as bezier from 'bezier-easing';
 import * as _ from 'lodash';
@@ -67,6 +67,25 @@ function getColor(resource: ResourceType): string {
       return '#33691E';
   }
   return 'black';
+}
+
+function getGradientColors(resource: ResourceType): string[] {
+  switch (resource) {
+    case ResourceType.BRICK:
+      return ['#E53935', '#C62828', '#B71C1C'];
+    case ResourceType.DESERT:
+      return ['#8F6455', '#795548', '#5D4037'];
+    case ResourceType.ORE:
+      return ['#CFD8DC', '#B0BEC5', '#90A4AE'];
+    case ResourceType.SHEEP:
+      return ['#BCFF6B', '#B2FF59', '#9EE34F'];
+    case ResourceType.WHEAT:
+      return ['#FFF176', '#FFEE58', '#FFEB3B'];
+    case ResourceType.WOOD:
+      return ['#3A7822', '#33691E', '#295418'];
+    default:
+      return ['black'];
+  }
 }
 
 interface TextOpts {
@@ -240,7 +259,10 @@ export class CatanBoardComponent implements OnChanges {
         0, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale,  // SW
         0, HEX_CORNER_HEIGHT * scale, // NW
     ]));
-    path.fillColor = getColor(hex.resource);
+    path.fillColor = new Color(
+        new Gradient(getGradientColors(hex.resource)),
+        new Point(0, HEX_CORNER_HEIGHT * scale),
+        new Point(HEX_DIMS.width * scale, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale));
     path.strokeColor = 'black';
     path.strokeWidth = 1;
 
@@ -278,7 +300,7 @@ export class CatanBoardComponent implements OnChanges {
     const scale = this.sizeAndScale.scale;
     const group = new Group();
 
-    const color = rollNum === 6 || rollNum === 8 ? 'red' : 'black';
+    const color = rollNum === 6 || rollNum === 8 ? '#D50000' : 'black';
     const point = new Point(0, 0);
 
     const circle = Shape.Circle(point, ROLL_NUMBER_SIZE * scale);
