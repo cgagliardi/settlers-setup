@@ -12,11 +12,6 @@ describe('RandomQueue', () => {
     RandomQueue.getRandomInt = originalGetRandomInt;
   });
 
-  it('createByCounts constructs new RandomQueue', () => {
-    const queue = RandomQueue.createByCounts(['a', 3], ['b', 1]);
-    verifyValues(queue, 'a', 'a', 'a', 'b');
-  });
-
   it('pops at random', () => {
     const queue = new RandomQueue([0, 1, 2]);
     expect(queue.length).toBe(3);

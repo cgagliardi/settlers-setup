@@ -28,7 +28,7 @@ function createByCounts<T>(...valueCounts: Array<[T, number]>): T[] {
 
 export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
   [BoardShape.STANDARD]: {
-    label: BoardShape.STANDARD,
+    shape: BoardShape.STANDARD,
     dimensions: {width: 5, height: 5},
     resources: () => createByCounts(
         [ResourceType.BRICK, 3],
@@ -145,7 +145,7 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
     rollNumbers: () => [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12],
   },
   [BoardShape.EXPANSION6]: {
-    label: BoardShape.EXPANSION6,
+    shape: BoardShape.EXPANSION6,
     dimensions: {width: 6, height: 7},
     resources: () => createByCounts(
         [ResourceType.BRICK, 5],

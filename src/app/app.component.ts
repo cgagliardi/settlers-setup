@@ -1,16 +1,19 @@
 import { Component, ElementRef, ViewChild, OnInit, HostBinding } from '@angular/core';
+import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
 import { Board, GameStyle } from './board/board';
 import { BOARD_SPECS, BoardShape } from './board/board-specs';
-import { SettlersConfig, BoardConfigComponent } from './components/board-config/board-config.component';
+import { SettlersConfig, BoardConfigComponent, FormState } from './components/board-config/board-config.component';
 import { SlidingCardComponent } from './components/sliding-card/sliding-card.component';
 import * as _ from 'lodash';
+import { serialize, deserialize } from './board/board-url-serializer';
 
-const BOARD_SPEC = BOARD_SPECS[BoardShape.STANDARD];
+const BOARD_URL_REGEX = /\/board\/([a-z\d\-]+)/;
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  providers: [Location, {provide: LocationStrategy, useClass: PathLocationStrategy}]
 })
 export class AppComponent implements OnInit {
   @ViewChild('boardConfigSlider') boardConfigSlider: SlidingCardComponent;
@@ -18,16 +21,28 @@ export class AppComponent implements OnInit {
 
   config: SettlersConfig;
   board: Board;
-  configFormState: Object;
+  configFormState: FormState;
+  boardAnimationEnabled = true;
+
+  constructor(private readonly location: Location) {}
 
   ngOnInit() {
     this.saveConfig(this.boardConfig.getConfig());
+    if (!this.readBoardFromUrl()) {
+      this.generateBoard();
+    }
+
+    this.location.subscribe(() => {
+      this.boardAnimationEnabled = false;
+      this.readBoardFromUrl();
+    });
   }
 
   handleConfigUpdate(config: SettlersConfig) {
     this.boardConfigSlider.toggle();
     setTimeout(() => {
       this.saveConfig(config);
+      this.generateBoard();
     }, 0);
   }
 
@@ -41,13 +56,34 @@ export class AppComponent implements OnInit {
     }
   }
 
-  saveConfig(config: SettlersConfig) {
+  private saveConfig(config: SettlersConfig) {
     this.config = config;
     this.configFormState = this.config.formState;
-    this.generateBoard();
   }
 
   generateBoard() {
+    this.boardAnimationEnabled = true;
+    const firstRender = !this.board;
     this.board = this.config.strategy.generateBoard(this.config.spec);
+    const newPath = '/board/' + serialize(this.board);
+    if (firstRender) {
+      this.location.replaceState(newPath);
+    } else {
+      this.location.go(newPath);
+    }
+  }
+
+  private readBoardFromUrl(): boolean {
+    const match = this.location.path().match(BOARD_URL_REGEX);
+    if (!match) {
+      return false;
+    }
+    this.board = deserialize(match[1]);
+    // The config is not actually saved in the URL, but we can at least infer the boardShape.
+    if (this.board.shape !== this.configFormState.boardShape) {
+      this.configFormState.boardShape = this.board.shape;
+      this.config = this.boardConfig.getConfig();
+    }
+    return true;
   }
 }

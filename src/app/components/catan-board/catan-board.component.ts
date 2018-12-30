@@ -149,6 +149,7 @@ const ROLL_NUM_ANIM_CONFIG = {
 })
 export class CatanBoardComponent implements OnChanges {
   @Input() board: Board;
+  @Input() animationEnabled: boolean;
   @ViewChild('canvas') canvas: ElementRef;
   @ViewChild('container') container: ElementRef;
   scope: PaperScope;
@@ -173,21 +174,16 @@ export class CatanBoardComponent implements OnChanges {
     this.drawBoard();
   }
 
-  toggleStats() {
-    this.showStats = !this.showStats;
-    this.drawBoard();
-  }
-
   onResize() {
     const sizeAndScale = this.calculateDimensions();
     if (this.sizeAndScale.width === sizeAndScale.width) {
       return;
     }
     this.sizeAndScale = sizeAndScale;
-    this.drawBoard(true /* skipAnimation */);
+    this.drawBoard(false /* animate */);
   }
 
-  drawBoard(skipAnimation = false) {
+  drawBoard(animate = this.animationEnabled) {
     const canvasEl = this.canvas.nativeElement;
     canvasEl.width = this.sizeAndScale.width;
     canvasEl.height = this.sizeAndScale.height;
@@ -230,10 +226,10 @@ export class CatanBoardComponent implements OnChanges {
       }
     }
 
-    if (skipAnimation) {
-      this.project.view.onFrame = function() {};
-    } else {
+    if (animate) {
       this.configureAnimation();
+    } else {
+      this.project.view.onFrame = function() {};
     }
   }
 

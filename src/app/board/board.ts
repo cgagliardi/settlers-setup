@@ -4,6 +4,7 @@
  * Strategy manipulates to fill a board and the UI reads to render the board.
  */
 import { RandomQueue } from './random-queue';
+import { BoardShape } from './board-specs';
 
  export enum GameStyle {
    STANDARD = 'Standard',
@@ -19,6 +20,8 @@ export enum ResourceType {
   WOOD = 'Wood',
   WHEAT = 'Wheat',
 }
+
+export const ROLL_NUMBERS = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as ReadonlyArray<number>;
 
 export const USABLE_RESOURCES = [
   ResourceType.BRICK,
@@ -93,8 +96,7 @@ export function getNumDots(rollNumber: number): number {
  * 6     3 5 7
  */
 export interface BoardSpec {
-  // A human readable name for this board layout.
-  readonly label: string;
+  readonly shape: BoardShape;
   // The maximum x and height of the board. Where width and height are defined by a single hex
   // being size 1. This translates to:
   // { height: hexes.length, width: (maxHexesCol.length+1)/2}
@@ -243,6 +245,7 @@ export class Hex {
 
 
 export class Board {
+  readonly shape: BoardShape;
   // So the BoardSpec for a description of what this value actually means.
   readonly dimensions: Dimensions;
   // Hexes represents all of the resource hexes on the board, where the indexes
@@ -256,6 +259,7 @@ export class Board {
   private flatCorners: ReadonlyArray<Corner>;
 
   constructor(spec: BoardSpec) {
+    this.shape = spec.shape;
     this.dimensions = spec.dimensions;
     this.hexGrid = spec.hexes(this);
 
@@ -302,6 +306,14 @@ export class Board {
       this.flatCorners = flatten2dArray(this.cornerGrid) as ReadonlyArray<Corner>;
     }
     return this.flatCorners;
+  }
+
+  get ports(): ReadonlyArray<Port> {
+    const ports = [];
+    for (const beach of this.beaches) {
+      ports.push(...beach.ports);
+    }
+    return ports;
   }
 
   getHex(x: number, y: number): Hex|undefined {
