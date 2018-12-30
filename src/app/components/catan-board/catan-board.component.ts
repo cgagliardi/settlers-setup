@@ -250,6 +250,9 @@ export class CatanBoardComponent implements OnChanges {
   }
 
   private renderHex(hex: Hex): [Item, Item|null] {
+    if (!hex.resource) {
+      return [new Group(), null];
+    }
     const scale = this.sizeAndScale.scale;
     const group = new Group();
 

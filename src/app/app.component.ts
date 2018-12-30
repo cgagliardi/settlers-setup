@@ -33,7 +33,6 @@ export class AppComponent implements OnInit {
     }
 
     this.location.subscribe(() => {
-      this.boardAnimationEnabled = false;
       this.readBoardFromUrl();
     });
   }
@@ -78,7 +77,13 @@ export class AppComponent implements OnInit {
     if (!match) {
       return false;
     }
-    this.board = deserialize(match[1]);
+    try {
+      this.board = deserialize(match[1]);
+      this.boardAnimationEnabled = false;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
     // The config is not actually saved in the URL, but we can at least infer the boardShape.
     if (this.board.shape !== this.configFormState.boardShape) {
       this.configFormState.boardShape = this.board.shape;
