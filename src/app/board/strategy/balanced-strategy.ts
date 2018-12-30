@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
 import { findAllLowestBy, hasAll, sumByKey } from 'src/app/util/collections';
+import { BoardShape } from '../board-specs';
 
 const NUM_ATTEMPTS = 35;
 
@@ -23,7 +24,7 @@ export class BalancedStrategy implements Strategy {
   generateBoard(spec: BoardSpec): Board {
     // Because we randomly generate N boards and pick the best one, the scoring can bias towards a
     // specific desert placement. To counteract this, we decide the desert placement up front.
-    this.desertPlacement = this.chooseDesertPlacement();
+    this.desertPlacement = this.chooseDesertPlacement(spec);
 
     // The algorithm in this class isn't great. So to compensate, we genrate NUM_ATTEMPTS boards,
     // and return the best one.
@@ -318,11 +319,12 @@ export class BalancedStrategy implements Strategy {
   }
 
   /**
-   * If the DesertPlaceement is set to RANDOM, picks one of the other options and random and returns
-   * that.
+   * If DesertPlaceement.RANDOM && BoardShape.STANDARD, picks one of the other options and random
+   * and returns that.
    */
-  private chooseDesertPlacement(): DesertPlacement {
-    if (this.options.desertPlacement === DesertPlacement.RANDOM) {
+  private chooseDesertPlacement(spec: BoardSpec): DesertPlacement {
+    if (this.options.desertPlacement === DesertPlacement.RANDOM &&
+        spec.shape === BoardShape.STANDARD) {
       const rand = Math.random();
       if (rand < 0.2) {
         return DesertPlacement.CENTER;
