@@ -285,7 +285,7 @@ export const BOARD_SPECS: { readonly [index: string]: BoardSpec } = {
       [9, 3],
       [10, 3],
       [11, 3],
-      [11, 2],
+      [12, 2],
     ),
   }
 };
