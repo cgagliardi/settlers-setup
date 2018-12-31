@@ -6,7 +6,17 @@ import { RandomQueue } from '../random-queue';
 import { findAllLowestBy, hasAll, sumByKey, findHighestBy } from 'src/app/util/collections';
 import { BoardShape } from '../board-specs';
 
-const NUM_ATTEMPTS = 30;
+// When generating a board, several boards are generated, returning the best one. The number of
+// boards generated is controlled by the constants below.
+// At least MIN_ATTEMPTS boards are generated.
+const MIN_ATTEMPTS = 30;
+// Board generation runs for at least MIN_TIME milliesconds.
+const MIN_TIME = 250;
+// The first execution of board generation is substantially slower, so FIRST_MIN_TIME milliseconds
+// is used on page load.
+const FIRST_MIN_TIME = 400;
+
+let firstGenerated = false;
 
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
@@ -26,12 +36,15 @@ export class BalancedStrategy implements Strategy {
     // specific desert placement. To counteract this, we decide the desert placement up front.
     this.desertPlacement = this.chooseDesertPlacement(spec);
 
-    // The algorithm in this class isn't great. So to compensate, we genrate NUM_ATTEMPTS boards,
-    // and return the best one.
+    // Each board is randomly generated with a best effort. We generate several boards and return
+    // the best one.
     let bestBoard: Board;
     let lowestScore = Number.MAX_VALUE;
     let lowestScoreStats;
-    for (let i = 0; i < NUM_ATTEMPTS; i++) {
+    const startTime = Date.now();
+    const minTime = firstGenerated ? MIN_TIME : FIRST_MIN_TIME;
+    let i = 0;
+    for (i = 0; i < MIN_ATTEMPTS || Date.now() - startTime < minTime; i++) {
       this.board = this.generateSingleBoard(spec);
       const [score, stats] = this.scoreBoard();
       if (lowestScore > score) {
@@ -40,8 +53,11 @@ export class BalancedStrategy implements Strategy {
         lowestScoreStats = stats;
       }
     }
+    console.log('num boards generated: ' + i);
     console.log('Board score: ' + lowestScore);
     console.log(lowestScoreStats);
+
+    firstGenerated = true;
     return bestBoard;
   }
 
