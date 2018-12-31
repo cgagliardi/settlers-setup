@@ -65,10 +65,11 @@ export class AppComponent implements OnInit {
     const firstRender = !this.board;
     this.board = this.config.strategy.generateBoard(this.config.spec);
     const newPath = '/board/' + serialize(this.board);
+    const newUrl = newPath + window.location.search + window.location.hash;
     if (firstRender) {
-      this.location.replaceState(newPath);
+      this.location.replaceState(newUrl);
     } else {
-      this.location.go(newPath);
+      this.location.go(newUrl);
     }
   }
 
