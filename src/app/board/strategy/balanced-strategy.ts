@@ -3,10 +3,10 @@ import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution, shuff
 import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
-import { findAllLowestBy, hasAll, sumByKey } from 'src/app/util/collections';
+import { findAllLowestBy, hasAll, sumByKey, findHighestBy } from 'src/app/util/collections';
 import { BoardShape } from '../board-specs';
 
-const NUM_ATTEMPTS = 35;
+const NUM_ATTEMPTS = 40;
 
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
@@ -53,7 +53,11 @@ export class BalancedStrategy implements Strategy {
     const scores = board.corners.map(c => c.score);
     const mean = _.mean(scores);
     const sum = _.sum(scores.map(s => Math.pow(mean - s, 2)));
-    return sum / board.corners.length;
+    const variance = sum / board.corners.length;
+
+    const highestCorner = findHighestBy(board.corners, c => c.score).score;
+
+    return variance + highestCorner * 0.3;
   }
 
   private generateSingleBoard(spec: BoardSpec): Board {
@@ -232,12 +236,12 @@ export class BalancedStrategy implements Strategy {
           this.getResourceValue(hex.resource) * this.getRollNumValue(hex.rollNumber, nextNumDots));
 
       // If balanceCoastAndDesert is set, pretend like the corner always has 3 resourced hexes where
-      // the rollNumber is an average roll number.
+      // the rollNumber is a bad number.
       if (balanceCoastAndDesert) {
         const nonDesertHexes = hexes.filter(h => h.resource !== ResourceType.DESERT);
         if (nonDesertHexes.length < 3) {
           score += (3 - nonDesertHexes.length) *
-              this.getResourceValue(ResourceType.BRICK) * this.getRollNumValue(4, nextNumDots);
+              this.getResourceValue(ResourceType.BRICK) * this.getRollNumValue(2, nextNumDots);
         }
       }
       const notes = [];
