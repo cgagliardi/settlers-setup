@@ -6,7 +6,7 @@ import { RandomQueue } from '../random-queue';
 import { findAllLowestBy, hasAll, sumByKey, findHighestBy } from 'src/app/util/collections';
 import { BoardShape } from '../board-specs';
 
-const NUM_ATTEMPTS = 40;
+const NUM_ATTEMPTS = 30;
 
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
@@ -30,15 +30,18 @@ export class BalancedStrategy implements Strategy {
     // and return the best one.
     let bestBoard: Board;
     let lowestScore = Number.MAX_VALUE;
+    let lowestScoreStats;
     for (let i = 0; i < NUM_ATTEMPTS; i++) {
-      const board = this.generateSingleBoard(spec);
-      const score = this.scoreBoard(board);
+      this.board = this.generateSingleBoard(spec);
+      const [score, stats] = this.scoreBoard();
       if (lowestScore > score) {
-        bestBoard = board;
+        bestBoard = this.board;
         lowestScore = score;
+        lowestScoreStats = stats;
       }
     }
     console.log('Board score: ' + lowestScore);
+    console.log(lowestScoreStats);
     return bestBoard;
   }
 
@@ -46,18 +49,18 @@ export class BalancedStrategy implements Strategy {
    * @returns A number that gives the quality of the board, where the lower the number, the better
    * the board.
    */
-  private scoreBoard(board: Board): number {
+  private scoreBoard(): [number, {standardDeviation: number, highestCorner: number}] {
+    // Compute the standard deviation of the corner scores.
     this.scoreHexesAndCorners(true /* balanceCoastAndDesert */);
-
-    // Compute the variance of the corner scores.
-    const scores = board.corners.map(c => c.score);
+    const scores = this.board.corners.map(c => c.score);
     const mean = _.mean(scores);
     const sum = _.sum(scores.map(s => Math.pow(mean - s, 2)));
-    const variance = sum / board.corners.length;
+    const standardDeviation = Math.sqrt(sum / this.board.corners.length);
 
-    const highestCorner = findHighestBy(board.corners, c => c.score).score;
+    this.scoreHexesAndCorners(false /* balanceCoastAndDesert */);
+    const highestCorner = findHighestBy(this.board.corners, c => c.score).score;
 
-    return variance + highestCorner * 0.3;
+    return [standardDeviation + highestCorner * 0.2, {standardDeviation, highestCorner}];
   }
 
   private generateSingleBoard(spec: BoardSpec): Board {
@@ -254,7 +257,7 @@ export class BalancedStrategy implements Strategy {
       const resourceOdds = this.computeRollOddsPerResource(hexes, nextNumDots);
       const addCombo = (name: string, multiplier: number, ...resources: ResourceType[]) => {
         if (hasAll(resourceOdds, ...resources)) {
-          const addition = sumByKey(resourceOdds, ...resources) * 0.1 * multiplier;
+          const addition = sumByKey(resourceOdds, ...resources) * 0.05 * multiplier;
           notes.push(name + ' corner: ' + _.round(addition, 2));
           score += addition;
         }
@@ -300,13 +303,10 @@ export class BalancedStrategy implements Strategy {
     }
     switch (this.options.gameStyle) {
       case GameStyle.CITIES_AND_KNIGHTS:
-        switch (resource) {
-          case ResourceType.SHEEP:
-            return 1;
-          case ResourceType.ORE:
-            return 1.2;
-          default:
-            return 1.1;
+        if (resource === ResourceType.SHEEP) {
+          return 1;
+        } else {
+          return 1.1;
         }
 
       default:
