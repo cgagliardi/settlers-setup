@@ -18,7 +18,8 @@ const BEACH_DISTANCE = 60;
 const BEACH_NUMBER_DISTANCE = 15;
 const BEACH_SCALE_FACTOR = 1.3;
 const BEACH_TEXT_SCALE_FACTOR = 0.9;
-const BEACH_BACKGROUND_RADIUS = 18;
+const PORT_BACKGROUND_RADIUS = 18;
+const PORT_DISTANCE = 42;
 // The diameter of the circle that shows the roll number.
 const ROLL_NUMBER_SIZE = 25;
 const ROLL_NUM_SCALE_FACTOR = 0.65;
@@ -406,11 +407,7 @@ export class CatanBoardComponent implements OnChanges {
       const vector = lastBeachPoint.subtract(outerPoint);
       vector.length += (HEX_SIDE_HEIGHT * 0.4 * scale);
       const innerPoint = outerPoint.add(vector);
-      path.fillColor =
-          new Color(
-            new Gradient(['#4a85d3', '#64B5F6']),
-            outerPoint,
-            innerPoint);
+      path.fillColor = new Color(new Gradient(['#4a85d3', '#64B5F6']), outerPoint, innerPoint);
     }
     path.strokeColor = 'black';
     path.strokeWidth = 1;
@@ -435,22 +432,21 @@ export class CatanBoardComponent implements OnChanges {
     const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     const portPoints = port.corners.map(c => this.getCornerPoint(c));
 
-    const labelPoint = getPointFromLine(portPoints[0], portPoints[1], 120, HEX_SIDE_HEIGHT * scale);
+    const labelPoint = getPointFromLine(
+        average(portPoints[0], portPoints[1]), portPoints[1], 90, PORT_DISTANCE * scale);
     const labelScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
 
     // Create lines from label to hex
     portPoints.forEach(portPoint => {
-      const line = new Path([portPoint, weightedAverage(portPoint, labelPoint, 0.4)]);
+      const line = new Path([portPoint, weightedAverage(portPoint, labelPoint, 0.45)]);
       line.strokeColor = '#4E342E';
       line.strokeWidth = 4 * scale;
       line.strokeCap = 'round'; // square butt
     });
 
     // Create circle background.
-    const radius = BEACH_BACKGROUND_RADIUS * labelScale;
-    const circle = Shape.Circle(
-        labelPoint.add(new Point(0, 1).multiply(labelScale)),
-        radius);
+    const radius = PORT_BACKGROUND_RADIUS * labelScale;
+    const circle = Shape.Circle(labelPoint, radius);
     circle.fillColor =
         new Color(
           new Gradient(getGradientColors(port.resource)),
@@ -462,7 +458,8 @@ export class CatanBoardComponent implements OnChanges {
     // Create label text.
     const color = port.resource === ResourceType.ANY ? 'white' : 'black';
     const text  = port.resource === ResourceType.ANY ? '?' : port.resource.substr(0, 2);
-    const label = this.renderText(text, labelPoint, {color, scale: labelScale});
+    const label = this.renderText(text,
+      labelPoint.subtract(new Point(0, 1).multiply(labelScale)), {color, scale: labelScale});
   }
 
   private getCornerPoint(corner: Coordinate): Point {
