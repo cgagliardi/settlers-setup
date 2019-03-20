@@ -18,6 +18,7 @@ const BEACH_DISTANCE = 60;
 const BEACH_NUMBER_DISTANCE = 15;
 const BEACH_SCALE_FACTOR = 1.3;
 const BEACH_TEXT_SCALE_FACTOR = 0.9;
+const BEACH_BACKGROUND_RADIUS = 18;
 // The diameter of the circle that shows the roll number.
 const ROLL_NUMBER_SIZE = 25;
 const ROLL_NUM_SCALE_FACTOR = 0.65;
@@ -51,8 +52,15 @@ function getPointFromLine(start: Point, end: Point, deg: number, dist: number): 
   return start.add(vector);
 }
 
-function averagePoints(p1: Point, p2: Point): Point {
+function average(p1: Point, p2: Point): Point {
   return p1.add(p2).divide(2);
+}
+
+// Returns a point somewhere along the line between the two points.
+// A weight of 0 will return p1. A weight of 1 will return p2.
+function weightedAverage(p1: Point, p2: Point, weight: number): Point {
+  const vector = p2.subtract(p1);
+  return p1.add(vector.multiply(weight));
 }
 
 function getColor(resource: ResourceType): string {
@@ -89,8 +97,10 @@ function getGradientColors(resource: ResourceType): string[] {
       return ['#FFF176', '#FFEE58', '#FFEB3B'];
     case ResourceType.WOOD:
       return ['#3A7822', '#33691E', '#295418'];
+    case ResourceType.ANY:
+      return ['black', '#6d6d6d'];
     default:
-      return ['black'];
+      return ['black', 'white'];
   }
 }
 
@@ -389,7 +399,19 @@ export class CatanBoardComponent implements OnChanges {
     points.push(outerRight, outerMiddle, outerLeft);
 
     const path = new Path(points);
-    path.fillColor = '#64B5F6';
+    {
+      // Beach gradient
+      const outerPoint = outerRight;
+      const lastBeachPoint = beachPoints[beachPoints.length - 1];
+      const vector = lastBeachPoint.subtract(outerPoint);
+      vector.length += (HEX_SIDE_HEIGHT * 0.4 * scale);
+      const innerPoint = outerPoint.add(vector);
+      path.fillColor =
+          new Color(
+            new Gradient(['#4a85d3', '#64B5F6']),
+            outerPoint,
+            innerPoint);
+    }
     path.strokeColor = 'black';
     path.strokeWidth = 1;
     path.closed = true;
@@ -403,25 +425,44 @@ export class CatanBoardComponent implements OnChanges {
 
   private renderBeachNumber(value: number, beachPoint: Point, outerPoint: Point, first: boolean) {
     const scale = this.adjustScale(BEACH_SCALE_FACTOR);
-    let point = averagePoints(beachPoint, outerPoint);
+    let point = average(beachPoint, outerPoint);
     point = getPointFromLine(point, outerPoint, first ? -90 : 90, BEACH_NUMBER_DISTANCE * scale);
     const textScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
-    this.renderText(value + '', point, { scale: textScale });
+    this.renderText(value + '', point, {bold: true, scale: textScale});
   }
 
   private renderPort(port: Port) {
     const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     const portPoints = port.corners.map(c => this.getCornerPoint(c));
-    const iconPoint = getPointFromLine(portPoints[0], portPoints[1], 120, HEX_SIDE_HEIGHT * scale);
-    const textScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
-    this.renderText(port.resource, iconPoint,
-        {bold: true, color: getColor(port.resource), scale: textScale});
 
+    const labelPoint = getPointFromLine(portPoints[0], portPoints[1], 120, HEX_SIDE_HEIGHT * scale);
+    const labelScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
+
+    // Create lines from label to hex
     portPoints.forEach(portPoint => {
-      const line = new Path([portPoint, averagePoints(portPoint, iconPoint)]);
+      const line = new Path([portPoint, weightedAverage(portPoint, labelPoint, 0.4)]);
       line.strokeColor = '#4E342E';
       line.strokeWidth = 4 * scale;
+      line.strokeCap = 'round'; // square butt
     });
+
+    // Create circle background.
+    const radius = BEACH_BACKGROUND_RADIUS * labelScale;
+    const circle = Shape.Circle(
+        labelPoint.add(new Point(0, 1).multiply(labelScale)),
+        radius);
+    circle.fillColor =
+        new Color(
+          new Gradient(getGradientColors(port.resource)),
+          labelPoint.subtract(radius), labelPoint.add(radius));
+    circle.shadowColor = new Color(0, 0.8);
+    circle.shadowOffset = 0.4 * labelScale;
+    circle.shadowBlur = 3 * labelScale;
+
+    // Create label text.
+    const color = port.resource === ResourceType.ANY ? 'white' : 'black';
+    const text  = port.resource === ResourceType.ANY ? '?' : port.resource.substr(0, 2);
+    const label = this.renderText(text, labelPoint, {color, scale: labelScale});
   }
 
   private getCornerPoint(corner: Coordinate): Point {
@@ -434,7 +475,7 @@ export class CatanBoardComponent implements OnChanges {
   }
 
   // Renders text centered over a point.
-  private renderText(content: string, center: Point, opts: TextOpts = {}) {
+  private renderText(content: string, center: Point, opts: TextOpts = {}): PointText {
     let size = opts.size || 12;
     size *= opts.scale || this.sizeAndScale.scale;
     const textPoint = new Point(center);
