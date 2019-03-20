@@ -13,15 +13,16 @@ $board-padding-sides: 0px;
 header {
   background: $primary;
   color: white;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: bold;
+  letter-spacing: 0.02em;
   // We add an extra 100px of space above the header so that the negative scroll on Apple devices
   // continues to show the header.
   margin-top: -100px;
-  padding: 118px 0 18px 20px;
+  padding: 118px 0 11px 20px;
+  position: relative;
   margin-bottom: 10px;
   z-index: 20;
-  position: relative;
 
   .settings-button {
     float: right;
