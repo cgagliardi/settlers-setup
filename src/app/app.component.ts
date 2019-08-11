@@ -1,11 +1,11 @@
-import { Component, ElementRef, ViewChild, OnInit, HostBinding } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
 import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
-import { Board, GameStyle } from './board/board';
-import { BOARD_SPECS, BoardShape } from './board/board-specs';
+import { Board } from './board/board';
 import { SettlersConfig, BoardConfigComponent, FormState } from './components/board-config/board-config.component';
 import { SlidingCardComponent } from './components/sliding-card/sliding-card.component';
-import * as _ from 'lodash';
 import { serialize, deserialize } from './board/board-url-serializer';
+
+import isEqual from 'lodash/isEqual';
 
 const BOARD_URL_REGEX = /\/board\/([a-z\d\-]+)/;
 
@@ -16,8 +16,8 @@ const BOARD_URL_REGEX = /\/board\/([a-z\d\-]+)/;
   providers: [Location, {provide: LocationStrategy, useClass: PathLocationStrategy}]
 })
 export class AppComponent implements OnInit {
-  @ViewChild('boardConfigSlider') boardConfigSlider: SlidingCardComponent;
-  @ViewChild('boardConfig') boardConfig: BoardConfigComponent;
+  @ViewChild('boardConfigSlider', {static: true}) boardConfigSlider: SlidingCardComponent;
+  @ViewChild('boardConfig', {static: true}) boardConfig: BoardConfigComponent;
 
   config: SettlersConfig;
   board: Board;
@@ -48,7 +48,7 @@ export class AppComponent implements OnInit {
   handleConfigButton() {
     // If the button is pressed while the form is open, only generate a new board if the form has
     // changed since it was closed.
-    if (!_.isEqual(this.boardConfig.getFormState(), this.configFormState)) {
+    if (!isEqual(this.boardConfig.getFormState(), this.configFormState)) {
       this.boardConfig.emitConfig();
     } else {
       this.boardConfigSlider.toggle();

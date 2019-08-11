@@ -15,7 +15,8 @@
  * 4. Concat the strings from step 3.
  */
 import { assert } from './assert';
-import * as _ from 'lodash';
+
+import padStart from 'lodash/padStart';
 
 // A block is a group of 10 base 36 characters. 10 digits is the largest base36 number without going
 // over Number.MAX_SAFE_INTEGER. FixedValuesSerializer serializes data into groups of 10 characters
@@ -52,11 +53,11 @@ export class FixedValuesSerializer<V> {
   serialize(values: Array<V|null|undefined>): string {
     const valueNums = this.convertToNumbers(values);
     const blockNums = this.convertToBlockNumbers(valueNums);
-    return blockNums.map((number, index) => {
-      let str = number.toString(36);
+    return blockNums.map((num, index) => {
+      let str = num.toString(36);
       // For all blocks besides the last, the block needs to be exactly BLOCK_SIZE characters long.
       if (index < blockNums.length - 1) {
-        str = _.padStart(str, BLOCK_SIZE, '0');
+        str = padStart(str, BLOCK_SIZE, '0');
       }
       return str;
     }).join('');

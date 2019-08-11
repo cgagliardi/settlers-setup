@@ -24,10 +24,10 @@ export function getClosedTransform(height: string|number): string {
         animate('400ms cubic-bezier(0.215, 0.61, 0.355, 1)')
       ]),
     ]),
-  ],
+   ],
 })
 export class SlidingCardComponent implements OnInit {
-  @ViewChild('container') containerRef: ElementRef;
+  @ViewChild('container', {static: true}) containerRef: ElementRef;
   private open = false;
 
   @HostBinding('@slide') get slide() {

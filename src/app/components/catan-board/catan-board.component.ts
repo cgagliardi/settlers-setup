@@ -1,10 +1,13 @@
-import { Component, OnInit, Input, ViewChild, OnChanges, ElementRef } from '@angular/core';
-import { Board, ResourceType, Dimensions, Hex, Corner, Coordinate, Beach, Port, getNumDots } from '../../board/board';
-import { PaperScope, Project, Path, Point, PointText, TextItem, Group, Item, Shape, Color, GradientStop, Gradient } from 'paper';
+import { Component, Input, ViewChild, OnChanges, ElementRef } from '@angular/core';
+import { Board, ResourceType, Hex, Corner, Coordinate, Beach, Port, getNumDots } from '../../board/board';
+import { PaperScope, Project, Path, Point, PointText, Group, Item, Shape, Color, Gradient, GradientStop } from 'paper';
 import { assert } from '../../util/assert';
 import * as bezier from 'bezier-easing';
-import * as _ from 'lodash';
 import { findHighestBy, findLowestBy } from 'src/app/util/collections';
+
+import clone from 'lodash/clone';
+import round from 'lodash/round';
+import shuffle from 'lodash/shuffle';
 
 // ====== Render Sizing ======
 // Note: the "scale factor" constants are used to slow down or speed up how much the numbers are
@@ -105,6 +108,17 @@ function getGradientColors(resource: ResourceType): string[] {
   }
 }
 
+function createGradient(colors: string[]): Gradient {
+  const gradient = new Gradient();
+  gradient.stops = colors.map((c, i) =>
+      new GradientStop(new Color(c), i / colors.length));
+  return gradient;
+}
+
+function getGradient(resource: ResourceType): Gradient {
+  return createGradient(getGradientColors(resource));
+}
+
 interface TextOpts {
   size?: number;
   color?: string;
@@ -161,8 +175,8 @@ const ROLL_NUM_ANIM_CONFIG = {
 export class CatanBoardComponent implements OnChanges {
   @Input() board: Board;
   @Input() animationEnabled: boolean;
-  @ViewChild('canvas') canvas: ElementRef;
-  @ViewChild('container') container: ElementRef;
+  @ViewChild('canvas', { static: true }) canvas: ElementRef;
+  @ViewChild('container', { static: true }) container: ElementRef;
   scope: PaperScope;
   project: Project;
   // To toggle showStats add ?debug=1 to the URL.
@@ -215,7 +229,7 @@ export class CatanBoardComponent implements OnChanges {
     for (let i = 0; i < this.board.hexes.length; i++) {
       placementOrder.push(i);
     }
-    placementOrder = _.shuffle(placementOrder);
+    placementOrder = shuffle(placementOrder);
 
     this.hexItems = [];
     this.rollNumItems = [];
@@ -240,7 +254,7 @@ export class CatanBoardComponent implements OnChanges {
     if (animate) {
       this.configureAnimation();
     } else {
-      this.project.view.onFrame = function() {};
+      this.project.view.onFrame = () => {};
     }
   }
 
@@ -277,16 +291,16 @@ export class CatanBoardComponent implements OnChanges {
         0, HEX_CORNER_HEIGHT * scale, // NW
     ]));
     path.fillColor = new Color(
-        new Gradient(getGradientColors(hex.resource)),
+        getGradient(hex.resource),
         new Point(0, HEX_CORNER_HEIGHT * scale),
         new Point(HEX_DIMS.width * scale, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale));
-    path.strokeColor = 'black';
+    path.strokeColor = new Color('black');
     path.strokeWidth = 1;
 
     group.addChild(path);
 
     if (this.showStats) {
-      const score = this.renderText(_.round(hex.score, 1) + '',
+      const score = this.renderText(round(hex.score, 1) + '',
           new Point(HEX_DIMS.width /  2 * scale, 18 * scale));
       group.addChild(score);
     }
@@ -320,9 +334,9 @@ export class CatanBoardComponent implements OnChanges {
     const color = rollNum === 6 || rollNum === 8 ? '#D50000' : 'black';
     const point = new Point(0, 0);
 
-    const circle = Shape.Circle(point, ROLL_NUMBER_SIZE * scale);
-    circle.fillColor = '#FFECB3';
-    circle.strokeColor = 'black';
+    const circle = new Shape.Circle(point, ROLL_NUMBER_SIZE * scale);
+    circle.fillColor = new Color('#FFECB3');
+    circle.strokeColor = new Color('black');
     circle.strokeWidth = 1;
     group.addChild(circle);
 
@@ -333,8 +347,8 @@ export class CatanBoardComponent implements OnChanges {
     const dotsGroup = new Group();
     const numDots = getNumDots(rollNum);
     for (let i = 0; i < numDots; i++) {
-      const dot = Shape.Circle(new Point(i * 4 * scale, 0), 1 * scale);
-      dot.fillColor = color;
+      const dot = new Shape.Circle(new Point(i * 4 * scale, 0), 1 * scale);
+      dot.fillColor = new Color(color);
       dotsGroup.addChild(dot);
     }
     group.addChild(dotsGroup);
@@ -355,15 +369,15 @@ export class CatanBoardComponent implements OnChanges {
     const circle = new Path.Circle(point, 10 * scale);
 
     if (isBest) {
-      circle.fillColor = 'green';
+      circle.fillColor = new Color('green');
     } else if (isWorst) {
-      circle.fillColor = 'red';
+      circle.fillColor = new Color('red');
     } else {
-      circle.fillColor = 'black';
+      circle.fillColor = new Color('black');
     }
     group.addChild(circle);
 
-    const text = this.renderText(_.round(corner.score, 1) + '',
+    const text = this.renderText(round(corner.score, 1) + '',
                                  point, {color: 'white', size: 8});
     group.addChild(text);
 
@@ -407,9 +421,9 @@ export class CatanBoardComponent implements OnChanges {
       const vector = lastBeachPoint.subtract(outerPoint);
       vector.length += (HEX_SIDE_HEIGHT * 0.4 * scale);
       const innerPoint = outerPoint.add(vector);
-      path.fillColor = new Color(new Gradient(['#4a85d3', '#64B5F6']), outerPoint, innerPoint);
+      path.fillColor = new Color(createGradient(['#4a85d3', '#64B5F6']), outerPoint, innerPoint);
     }
-    path.strokeColor = 'black';
+    path.strokeColor = new Color('black');
     path.strokeWidth = 1;
     path.closed = true;
 
@@ -439,20 +453,20 @@ export class CatanBoardComponent implements OnChanges {
     // Create lines from label to hex
     portPoints.forEach(portPoint => {
       const line = new Path([portPoint, weightedAverage(portPoint, labelPoint, 0.45)]);
-      line.strokeColor = '#4E342E';
+      line.strokeColor = new Color('#4E342E');
       line.strokeWidth = 4 * scale;
       line.strokeCap = 'round'; // square butt
     });
 
     // Create circle background.
     const radius = PORT_BACKGROUND_RADIUS * labelScale;
-    const circle = Shape.Circle(labelPoint, radius);
+    const circle = new Shape.Circle(labelPoint, radius);
     circle.fillColor =
         new Color(
-          new Gradient(getGradientColors(port.resource)),
+          getGradient(port.resource),
           labelPoint.subtract(radius), labelPoint.add(radius));
     circle.shadowColor = new Color(0, 0.8);
-    circle.shadowOffset = 0.4 * labelScale;
+    circle.shadowOffset = new Point(0.4 * labelScale, 0.4 * labelScale);
     circle.shadowBlur = 3 * labelScale;
 
     // Create label text.
@@ -483,7 +497,7 @@ export class CatanBoardComponent implements OnChanges {
     if (opts.bold) {
       label.fontWeight = 'bold';
     }
-    label.fillColor = opts.color || 'black';
+    label.fillColor = new Color(opts.color || 'black');
     label.justification = 'center';
     return label;
   }
@@ -495,13 +509,13 @@ export class CatanBoardComponent implements OnChanges {
   // ===================================================================
   private configureAnimation() {
     this.animationComplete = false;
-    this.hexAnimConfig = _.clone(HEX_ANIM_CONFIG);
+    this.hexAnimConfig = clone(HEX_ANIM_CONFIG);
     // If this is during page-load, then wait a little bit before starting the animation. Otherwise
     // most frames will be dropped.
     this.hexAnimConfig.startTime = firstRenderComplete ? 0.03 : 0.3;
     this.calculateTotalDuration(this.hexAnimConfig);
 
-    this.rollNumAnimConfig = _.clone(ROLL_NUM_ANIM_CONFIG);
+    this.rollNumAnimConfig = clone(ROLL_NUM_ANIM_CONFIG);
     // Start the rollNum animtions part of the way through the hex animations.
     this.rollNumAnimConfig.startTime =
         this.hexAnimConfig.startTime +

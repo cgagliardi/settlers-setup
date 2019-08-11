@@ -1,10 +1,18 @@
 import { Board, BoardSpec, ResourceType, Hex, getNumDots, GameStyle, USABLE_RESOURCES, Coordinate } from '../board';
 import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution, shufflePorts } from './strategy';
-import * as _ from 'lodash';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
 import { findAllLowestBy, hasAll, sumByKey, findHighestBy } from 'src/app/util/collections';
 import { BoardShape } from '../board-specs';
+
+import last from 'lodash/last';
+import mean from 'lodash/mean';
+import pull from 'lodash/pull';
+import round from 'lodash/round';
+import sample from 'lodash/sample';
+import sortBy from 'lodash/sortBy';
+import sum from 'lodash/sum';
+import sumBy from 'lodash/sumBy';
 
 // When generating a board, several boards are generated, returning the best one. The number of
 // boards generated is controlled by the constants below.
@@ -69,9 +77,9 @@ export class BalancedStrategy implements Strategy {
     // Compute the standard deviation of the corner scores.
     this.scoreHexesAndCorners(true /* balanceCoastAndDesert */);
     const scores = this.board.corners.map(c => c.score);
-    const mean = _.mean(scores);
-    const sum = _.sum(scores.map(s => Math.pow(mean - s, 2)));
-    const standardDeviation = Math.sqrt(sum / this.board.corners.length);
+    const scoreMean = mean(scores);
+    const scoreSum = sum(scores.map(s => Math.pow(scoreMean - s, 2)));
+    const standardDeviation = Math.sqrt(scoreSum / this.board.corners.length);
 
     this.scoreHexesAndCorners(false /* balanceCoastAndDesert */);
     const highestCorner = findHighestBy(this.board.corners, c => c.score).score;
@@ -88,7 +96,7 @@ export class BalancedStrategy implements Strategy {
     // Place all of the resource hexes. This function can fail, so its run in a loop until it
     // succeeds. Place hexes also places a few roll numbers.
     do {
-      this.remainingNumbers = _.sortBy(spec.rollNumbers(), n => getNumDots(n));
+      this.remainingNumbers = sortBy(spec.rollNumbers(), n => getNumDots(n));
       this.remainingResources = new RandomQueue(spec.resources());
       this.initialResources = new RandomQueue(USABLE_RESOURCES);
       board.reset();
@@ -118,7 +126,7 @@ export class BalancedStrategy implements Strategy {
 
     // Next ensure that there's at least 1 red roll number that is inland.
     // Without this part, it's common that all red numbers are coastal, and that's less fun.
-    const inlandHex = _.sample(board.hexes.filter(h => !h.resource && !isCoastal(h)));
+    const inlandHex = sample(board.hexes.filter(h => !h.resource && !isCoastal(h)));
     inlandHex.resource = this.initialResources.pop();
     inlandHex.rollNumber = this.remainingNumbers.pop();
     this.remainingResources.remove(inlandHex.resource);
@@ -127,6 +135,7 @@ export class BalancedStrategy implements Strategy {
     // high numbers are not touching each other. This ensures every resource has at least one
     // good roll number.
     let resource: ResourceType;
+    // tslint:disable-next-line:no-conditional-assignment
     while (resource = this.initialResources.pop()) {
       const availableHexes = board.hexes.filter(h =>
           !h.resource &&
@@ -135,7 +144,7 @@ export class BalancedStrategy implements Strategy {
       if (!availableHexes.length) {
         return false;
       }
-      const hex = _.sample(availableHexes);
+      const hex = sample(availableHexes);
       hex.resource = resource;
       hex.rollNumber = this.remainingNumbers.pop();
       this.remainingResources.remove(resource);
@@ -208,7 +217,7 @@ export class BalancedStrategy implements Strategy {
     }
 
     while (this.remainingResources.remove(ResourceType.DESERT)) {
-      const hex = _.sample(availableHexes);
+      const hex = sample(availableHexes);
       assert(hex);
       hex.resource = ResourceType.DESERT;
     }
@@ -232,8 +241,8 @@ export class BalancedStrategy implements Strategy {
   private placeNumber() {
     this.scoreHexesAndCorners();
 
-    const hex = _.sample(findAllLowestBy(this.remainingHexes, h => h.score));
-    _.pull(this.remainingHexes, hex);
+    const hex = sample(findAllLowestBy(this.remainingHexes, h => h.score));
+    pull(this.remainingHexes, hex);
 
     hex.rollNumber = this.remainingNumbers.pop();
   }
@@ -245,13 +254,13 @@ export class BalancedStrategy implements Strategy {
    */
   private scoreHexesAndCorners(balanceCoastAndDesert = false) {
     const nextNumDots = this.remainingNumbers.length ?
-        getNumDots(_.last(this.remainingNumbers)) : 0;
+        getNumDots(last(this.remainingNumbers)) : 0;
 
     // First score every corner by evaluating how good of a spot that specific corner is.
     for (const corner of this.board.corners) {
       const hexes = corner.getHexes();
       // Sum the value of each neighboring hex.
-      let score = _.sumBy(hexes, hex =>
+      let score = sumBy(hexes, hex =>
           this.getResourceValue(hex.resource) * this.getRollNumValue(hex.rollNumber, nextNumDots));
 
       // If balanceCoastAndDesert is set, pretend like the corner always has 3 resourced hexes where
@@ -274,7 +283,7 @@ export class BalancedStrategy implements Strategy {
       const addCombo = (name: string, multiplier: number, ...resources: ResourceType[]) => {
         if (hasAll(resourceOdds, ...resources)) {
           const addition = sumByKey(resourceOdds, ...resources) * 0.05 * multiplier;
-          notes.push(name + ' corner: ' + _.round(addition, 2));
+          notes.push(name + ' corner: ' + round(addition, 2));
           score += addition;
         }
       };
@@ -288,7 +297,7 @@ export class BalancedStrategy implements Strategy {
     }
 
     for (const hex of this.board.hexes) {
-      const sumOfCorners = _.sumBy(hex.getCorners(), corner => corner.score);
+      const sumOfCorners = sumBy(hex.getCorners(), corner => corner.score);
       // Evaluate the hex's resource and roll number.
       const hexMultiplier =
           Math.pow(this.getResourceValue(hex.resource) *
