@@ -3,13 +3,7 @@
  * define a Settlers board (BoardSpec). Additionaly, this file provides the Board class, which a
  * Strategy manipulates to fill a board and the UI reads to render the board.
  */
-import { RandomQueue } from './random-queue';
 import { BoardShape } from './board-specs';
-
- export enum GameStyle {
-   STANDARD = 'Standard',
-   CITIES_AND_KNIGHTS = 'Cities & Knights',
- }
 
 export enum ResourceType {
   ANY = 'Any', // Used for 3:1 ports.

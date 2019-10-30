@@ -1,4 +1,4 @@
-import { Board, BoardSpec, ResourceType, Hex, getNumDots, GameStyle, USABLE_RESOURCES, Coordinate } from '../board';
+import { Board, BoardSpec, ResourceType, Hex, getNumDots, USABLE_RESOURCES, Coordinate } from '../board';
 import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution, shufflePorts } from './strategy';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
@@ -294,9 +294,6 @@ export class BalancedStrategy implements Strategy {
       };
       addCombo('City', 3, ResourceType.WHEAT, ResourceType.ORE);
       addCombo('Road', 2.5, ResourceType.BRICK, ResourceType.WOOD);
-      if (this.options.gameStyle === GameStyle.STANDARD) {
-        addCombo('Development card', 1, ResourceType.SHEEP, ResourceType.ORE, ResourceType.WHEAT);
-      }
       corner.notes = notes.join('\n');
       corner.score = score;
     }
@@ -325,24 +322,7 @@ export class BalancedStrategy implements Strategy {
 
   private getResourceValue(resource: ResourceType): number {
     assert(resource);
-    if (resource === ResourceType.DESERT) {
-      return 0;
-    }
-    switch (this.options.gameStyle) {
-      case GameStyle.CITIES_AND_KNIGHTS:
-        if (resource === ResourceType.SHEEP) {
-          return 1;
-        } else {
-          return 1.1;
-        }
-
-      default:
-        if (resource === ResourceType.ORE) {
-          return 1.1;
-        } else {
-          return 1;
-        }
-    }
+    return resource === ResourceType.DESERT ? 0 : 1;
   }
 
   private getRollNumValue(rollNumber: number, missingValue = 0): number {

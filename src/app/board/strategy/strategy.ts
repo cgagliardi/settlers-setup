@@ -1,4 +1,4 @@
-import { Board, BoardSpec, GameStyle, ResourceType } from '../board';
+import { Board, BoardSpec, ResourceType } from '../board';
 import { RandomQueue } from '../random-queue';
 
 export enum DesertPlacement {
@@ -14,7 +14,6 @@ export enum ResourceDistribution {
 }
 
 export interface StrategyOptions {
-  gameStyle: GameStyle;
   desertPlacement: DesertPlacement;
   resourceDistribution: ResourceDistribution;
   shufflePorts: boolean;
@@ -28,9 +27,7 @@ export interface Strategy {
   generateBoard: (spec: BoardSpec) => Board;
 }
 
-export interface StrategyConstructor {
-  new (options: StrategyOptions): Strategy;
-}
+export type StrategyConstructor = new (options: StrategyOptions) => Strategy;
 
 export function shufflePorts(board: Board) {
   const resources = new RandomQueue<ResourceType>();

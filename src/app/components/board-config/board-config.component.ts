@@ -1,12 +1,11 @@
 import { Component, EventEmitter, Output, Input, OnChanges } from '@angular/core';
-import { GameStyle, BoardSpec } from '../../board/board';
+import { BoardSpec } from '../../board/board';
 import { BoardShape, BOARD_SPECS } from '../../board/board-specs';
 import { BalancedStrategy } from '../../board/strategy/balanced-strategy';
 import { Strategy, DesertPlacement, ResourceDistribution } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 
 export interface FormState {
-  gameStyle: GameStyle;
   boardShape: BoardShape;
   desertPlacement: DesertPlacement;
   resourceDistribution: ResourceDistribution;
@@ -47,10 +46,6 @@ export class BoardConfigComponent implements OnChanges {
     BoardShape.STANDARD,
     BoardShape.EXPANSION6);
 
-  gameStyles = toOptionDef(
-    ['None', GameStyle.STANDARD],
-    GameStyle.CITIES_AND_KNIGHTS);
-
   desertPlacements = toOptionDef(
     DesertPlacement.RANDOM,
     DesertPlacement.CENTER,
@@ -63,7 +58,6 @@ export class BoardConfigComponent implements OnChanges {
 
   configForm = this.fb.group({
     boardShape: [this.boardShapes[0].value],
-    gameStyle: [this.gameStyles[0].value],
     desertPlacement: [this.desertPlacements[0].value],
     resourceDistribution: [this.resourceDistributions[0].value],
     shufflePorts: false,
@@ -91,7 +85,6 @@ export class BoardConfigComponent implements OnChanges {
     const state = this.getFormState();
     const strategy =
         new BalancedStrategy({
-          gameStyle: state.gameStyle,
           desertPlacement: state.desertPlacement,
           resourceDistribution: state.resourceDistribution,
           shufflePorts: state.shufflePorts,

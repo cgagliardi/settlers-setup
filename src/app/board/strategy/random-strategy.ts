@@ -1,4 +1,4 @@
-import { Board, BoardSpec, ResourceType, GameStyle } from '../board';
+import { Board, BoardSpec, ResourceType } from '../board';
 import { Strategy, StrategyOptions, shufflePorts } from './strategy';
 import { RandomQueue } from '../random-queue';
 
