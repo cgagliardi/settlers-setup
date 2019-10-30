@@ -180,12 +180,12 @@ export class BalancedStrategy implements Strategy {
       }
       if (this.options.resourceDistribution === ResourceDistribution.EVEN) {
         resource = this.remainingResources.popExcluding(...hex.getNeighborResources());
-        if (!resource) {
-          return false;
-        }
       } else {
         // resourceDistribution === ResourceDistribution.RANDOM
         resource = this.remainingResources.pop();
+      }
+      if (!resource) {
+        return false;
       }
       hex.resource = resource;
     }
