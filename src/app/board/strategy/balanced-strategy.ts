@@ -24,6 +24,11 @@ const MIN_TIME = 250;
 // is used on page load.
 const FIRST_MIN_TIME = 400;
 
+// This magic number is used to score hexes. A hex is scored as the sum of it's corner values,
+// where each value is raised by this power. This number was found by trying several iterations of
+// numbers to see which produced the optimal score.
+const HEX_CORNER_POWER = 6;
+
 let firstGenerated = false;
 
 export class BalancedStrategy implements Strategy {
@@ -297,12 +302,9 @@ export class BalancedStrategy implements Strategy {
     }
 
     for (const hex of this.board.hexes) {
-      const sumOfCorners = sumBy(hex.getCorners(), corner => corner.score);
-      // Evaluate the hex's resource and roll number.
-      const hexMultiplier =
-          Math.pow(this.getResourceValue(hex.resource) *
-                   this.getRollNumValue(hex.rollNumber, 0), nextNumDots);
-      hex.score = sumOfCorners * hexMultiplier;
+      const sumOfCorners = sumBy(hex.getCorners(),
+          corner => Math.pow(corner.score, HEX_CORNER_POWER));
+      hex.score = sumOfCorners;
     }
   }
 
