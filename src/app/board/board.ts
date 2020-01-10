@@ -252,7 +252,7 @@ export class Board {
   // Cached value for get corners.
   private flatCorners: ReadonlyArray<Corner>;
 
-  constructor(spec: BoardSpec) {
+  constructor(public readonly spec: BoardSpec) {
     this.shape = spec.shape;
     this.dimensions = spec.dimensions;
     this.hexGrid = spec.hexes(this);
@@ -365,10 +365,10 @@ function getFrom2dArray<T>(arr: Array<Array<T>>, x: number, y: number): T|undefi
  */
 function flatten2dArray<T>(grid: Array<Array<T|undefined>>): T[] {
   const arr = [];
-  for (let r = 0; r < grid.length; r++) {
-    for (let c = 0; c < grid[r].length; c++) {
-      if (grid[r][c]) {
-        arr.push(grid[r][c]);
+  for (const row of grid) {
+    for (const cell of row) {
+      if (cell) {
+        arr.push(cell);
       }
     }
   }

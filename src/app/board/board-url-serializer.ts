@@ -38,28 +38,45 @@ const rollNumSerializer = new FixedValuesSerializer(ROLL_NUMS);
  *
  */
 export function serialize(board: Board): string {
-  const version = '1';
   const shape = serializeShape(board.shape);
-  const portResources = portResourceSerializer.serialize(board.ports.map(p => p.resource));
   const hexResources = hexResourceSerializer.serialize(board.hexes.map(h => h.resource));
   const rollNums = rollNumSerializer.serialize(board.hexes.map(h => h.rollNumber));
 
-  return version + shape + portResources + '-' + hexResources + '-' + rollNums;
+  let serialized = shape + hexResources + '-' + rollNums;
+
+  if (!hasDefaultPorts(board)) {
+    const portResources = portResourceSerializer.serialize(board.ports.map(p => p.resource));
+    serialized += '-' + portResources;
+  }
+
+  return serialized;
+}
+
+function hasDefaultPorts(board: Board) {
+  const defaultBeaches = board.spec.beaches();
+  for (let i = 0; i < board.beaches.length; i++) {
+    const boardBeach = board.beaches[i];
+    const defaultBeach = defaultBeaches[i];
+    if (!boardBeach.ports.every((port, j) => port.resource === defaultBeach.ports[j].resource)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function deserialize(val: string): Board {
   const version = val[0];
-  assert(version === '1', 'Unsupported serialization version ' + val);
+  assert(version === '1' || version === '2', 'Unsupported serialization version ' + val);
 
-  const shape = deserializeShape(val[1]);
+  // The version number also represents the board shape (hence 2 supported values).
+  const shape = deserializeShape(val[0]);
   const boardSpec = BOARD_SPECS[shape];
   const board = new Board(boardSpec);
 
-  const [portVal, hexResourceVal, rollNumVal] = val.substr(2).split('-');
+  const parts = val.substr(1).split('-');
+  const hexResourceVal = parts[0];
+  const rollNumVal = parts[1];
 
-  const portResources = boardSpec.beaches().reduce((ports, beach) => {
-    return ports.concat(beach.ports.map(p => p.resource));
-  }, [] as Array<ResourceType>);
   const hexResources = boardSpec.resources();
   const rollNums = boardSpec.rollNumbers();
   // Account for the "null" values that will be in roll numbers, which represents a desert
@@ -70,31 +87,49 @@ export function deserialize(val: string): Board {
     }
   }
 
-  deserializeEntities(portVal, portResourceSerializer, portResources, board.ports,
-      (port, resource) => port.resource = resource);
   deserializeEntities(hexResourceVal, hexResourceSerializer, hexResources, board.hexes,
       (hex, resource) => hex.resource = resource);
   deserializeEntities(rollNumVal, rollNumSerializer, rollNums, board.hexes,
       (hex, num) => hex.rollNumber = num);
 
+  // The last section of the URL is the placement of the ports. This is only set when it is not
+  // the default.
+  if (parts.length > 2) {
+    const portsVal = parts[2];
+
+    const portResources = boardSpec.beaches().reduce((ports, beach) => {
+      return ports.concat(beach.ports.map(p => p.resource));
+    }, [] as Array<ResourceType>);
+
+    deserializeEntities(portsVal, portResourceSerializer, portResources, board.ports,
+      (port, resource) => port.resource = resource);
+  }
+
   return board;
+}
+
+/**
+ * Returns true if there are custom ports specified in the URL.
+ */
+export function hasCustomPorts(val: string) {
+  return val.split('-').length > 2;
 }
 
 function serializeShape(shape: BoardShape): string {
   switch (shape) {
     case BoardShape.STANDARD:
-      return 's';
+      return '1';
     case BoardShape.EXPANSION6:
-      return '6';
+      return '2';
   }
   throw new Error('Unsupported shape ' + shape);
 }
 
 function deserializeShape(val: string): BoardShape {
   switch (val) {
-    case 's':
+    case '1':
       return BoardShape.STANDARD;
-    case '6':
+    case '2':
       return BoardShape.EXPANSION6;
   }
   throw new Error('Unsupported shape ' + val);

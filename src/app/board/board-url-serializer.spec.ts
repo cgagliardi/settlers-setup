@@ -2,6 +2,8 @@ import { serialize, deserialize } from './board-url-serializer';
 import { Board, ResourceType, ROLL_NUMBERS, BoardSpec } from './board';
 import { BOARD_SPECS, BoardShape } from './board-specs';
 
+import flatten from 'lodash/flatten';
+
 describe('board-url-serializer', () => {
   let standardBoard: Board;
   let expansion56Board: Board;
@@ -11,31 +13,17 @@ describe('board-url-serializer', () => {
     expansion56Board = createBoard(BOARD_SPECS[BoardShape.EXPANSION6]);
   });
 
-  it('starts with version', () => {
-    const value = serialize(standardBoard);
-    expect(value[0]).toBe('1');
-  });
-
-  it('serializes Standard shape', () => {
-    const value = serialize(standardBoard);
-    expect(value[1]).toBe('s');
-    const deserialized = deserialize(value);
-    expect(deserialized.shape).toBe(BoardShape.STANDARD);
-  });
-
-  it('serializes Expansion 5-6 shape', () => {
-    const value = serialize(expansion56Board);
-    expect(value[1]).toBe('6');
-    const deserialized = deserialize(value);
-    expect(deserialized.shape).toBe(BoardShape.EXPANSION6);
-  });
-
   it('serializes Standard board', () => {
     const value = serialize(standardBoard);
-    expect(extractPart(value, 0)).toBe('4R8g');
-    expect(extractPart(value, 1)).toBe('1sePYp3');
-    expect(extractPart(value, 2)).toBe('xv56o3Y11');
+    expect(value[0]).toBe('1');
+
+    const parts = value.substr(1).split('-');
+    expect(parts.length).toBe(2);
+    expect(parts[0]).toBe('1sePYp3');
+    expect(parts[1]).toBe('xv56o3Y11');
     const deserialized = deserialize(value);
+
+    expect(deserialized.shape).toBe(BoardShape.STANDARD);
 
     const ports = standardBoard.ports;
     for (let i = 0; i < ports.length; i++) {
@@ -49,16 +37,59 @@ describe('board-url-serializer', () => {
     }
   });
 
-  function extractPart(value: string, i: number): string {
-    expect(value.length).toBeGreaterThan(3);
-    const parts = value.substr(2).split('-');
-    expect(parts.length).toBe(3);
-    return parts[i];
-  }
+  it('serializes Standard board with custom ports', () => {
+    const board = createBoard(BOARD_SPECS[BoardShape.STANDARD], true /* change ports */);
 
-  function createBoard(spec: BoardSpec): Board {
+    const value = serialize(board);
+    const parts = value.substr(1).split('-');
+    expect(parts.length).toBe(3);
+    expect(parts[0]).toBe('1sePYp3');
+    expect(parts[1]).toBe('xv56o3Y11');
+    expect(parts[2]).toBe('5d1H');
+    const deserialized = deserialize(value);
+
+    expect(deserialized.shape).toBe(BoardShape.STANDARD);
+
+    const ports = board.ports;
+    for (let i = 0; i < ports.length; i++) {
+      expect(deserialized.ports[i].resource).toBe(ports[i].resource);
+    }
+    for (let i = 0; i < board.hexes.length; i++) {
+      const actualHex = deserialized.hexes[i];
+      const expectedHex = board.hexes[i];
+      expect(actualHex.resource).toBe(expectedHex.resource);
+      expect(actualHex.rollNumber).toBe(expectedHex.rollNumber);
+    }
+  });
+
+  it('serializes Expansion 5-6', () => {
+    const value = serialize(expansion56Board);
+    expect(value[0]).toBe('2');
+
+    const parts = value.substr(1).split('-');
+    expect(parts.length).toBe(2);
+    expect(parts[0]).toBe('tjZ9m4u7rE');
+    expect(parts[1]).toBe('lhKI0wnPnF0Fl');
+    const deserialized = deserialize(value);
+
+    expect(deserialized.shape).toBe(BoardShape.EXPANSION6);
+
+    const ports = expansion56Board.ports;
+    for (let i = 0; i < ports.length; i++) {
+      expect(deserialized.ports[i].resource).toBe(ports[i].resource);
+    }
+    for (let i = 0; i < expansion56Board.hexes.length; i++) {
+      const actualHex = deserialized.hexes[i];
+      const expectedHex = expansion56Board.hexes[i];
+      expect(actualHex.resource).toBe(expectedHex.resource);
+      expect(actualHex.rollNumber).toBe(expectedHex.rollNumber);
+    }
+  });
+
+  function createBoard(spec: BoardSpec, changePorts = false): Board {
     const board = new Board(spec);
 
+    // Sort the values so that it's a custom, but unique order.
     const resources = spec.resources();
     resources.sort();
     const rollNums = spec.rollNumbers();
@@ -69,6 +100,21 @@ describe('board-url-serializer', () => {
 
       if (hex.resource !== ResourceType.DESERT) {
         hex.rollNumber = rollNums.shift();
+      }
+    }
+
+    if (!changePorts) {
+      return board;
+    }
+
+    const beaches = spec.beaches();
+    const portResources = flatten(beaches.map(b => b.ports)).map(p => p.resource);
+    portResources.sort();
+    let i = 0;
+    for (const beach of board.beaches) {
+      for (const port of beach.ports) {
+        port.resource = portResources[i];
+        i++;
       }
     }
 

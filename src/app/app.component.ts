@@ -3,11 +3,11 @@ import { Location, LocationStrategy, PathLocationStrategy } from '@angular/commo
 import { Board } from './board/board';
 import { SettlersConfig, BoardConfigComponent, FormState } from './components/board-config/board-config.component';
 import { SlidingCardComponent } from './components/sliding-card/sliding-card.component';
-import { serialize, deserialize } from './board/board-url-serializer';
+import { serialize, deserialize, hasCustomPorts } from './board/board-url-serializer';
 
 import isEqual from 'lodash/isEqual';
 
-const BOARD_URL_REGEX = /\/board\/([a-z\d\-]+)/;
+const BOARD_URL_REGEX = /\/board\/([a-z\dA-Z\-]+)/;
 
 @Component({
   selector: 'app-root',
@@ -81,15 +81,20 @@ export class AppComponent implements OnInit {
     try {
       this.board = deserialize(match[1]);
       this.boardAnimationEnabled = false;
+
+      // The config is not actually saved in the URL, but we can at least infer the boardShape and
+      // whether ports were shuffled.
+      const customPorts = hasCustomPorts(match[1]);
+      if (this.board.shape !== this.configFormState.boardShape || customPorts) {
+        this.configFormState.boardShape = this.board.shape;
+        this.configFormState.shufflePorts = customPorts;
+        this.config = this.boardConfig.getConfig();
+      }
     } catch (error) {
       console.error(error);
       return false;
     }
-    // The config is not actually saved in the URL, but we can at least infer the boardShape.
-    if (this.board.shape !== this.configFormState.boardShape) {
-      this.configFormState.boardShape = this.board.shape;
-      this.config = this.boardConfig.getConfig();
-    }
+
     return true;
   }
 }
