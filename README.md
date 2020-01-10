@@ -12,7 +12,7 @@ Settlers Setup is in no way affiliated with Mayfair Games or Klaus Teuber, of wh
 This project is implemented in TypeScript using Angular for the UI. The algorithm and datastructures
 are in `src/app/board/`. This directory does not have any Angular specific dependencies. The algorithm itself is in `src/app/board/strategy/balanced-strategy.ts`.
 
-The standard and expansion boards are defined in `src/app/board/board-specs.ts`. In order to add support for Seafarers, a number of changes would be required in `board.ts` and the rendering code `catan-board.component.ts`, which makes several assumptions about the standard hex shape of the board.
+The standard and expansion boards are defined in `src/app/board/board-specs.ts`.
 
 All of the rendering is done in `src/app/components/catan-board/catan-board.component.ts`.
 
