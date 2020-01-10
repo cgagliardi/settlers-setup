@@ -1,5 +1,5 @@
 /**
- * @fileoverview FixedValuesSerializer is used to serialize a list of limited values to a lower
+ * @fileoverview FixedValuesSerializer is used to serialize a list of limited values to an
  * alpha-numeric string. In order to serialize/deserialize a list, the list must be of a fixed size
  * with a fixed set of possible values. It must be known how much of each value will be in the
  * array.
@@ -24,10 +24,10 @@ import { assert } from './assert';
 
 import padStart from 'lodash/padStart';
 
-// A block is a group of 10 base 36 characters. 10 digits is the largest base36 number without going
-// over Number.MAX_SAFE_INTEGER. FixedValuesSerializer serializes data into groups of 10 characters
-const BLOCK_SIZE = 10;
-const MAX_BLOCK_INTEGER = Math.pow(36, BLOCK_SIZE);
+// A block is a group of 8 base 62 characters. *** digits is the largest base62 number without going
+// over Number.MAX_SAFE_INTEGER. FixedValuesSerializer serializes data into groups of 8 characters
+const BLOCK_SIZE = 8;
+const MAX_BLOCK_INTEGER = Math.pow(62, BLOCK_SIZE);
 
 /**
  * Serializes and deserializes a list into a base 36 string where the list of entries has a fixed
@@ -42,7 +42,7 @@ export class FixedValuesSerializer<V> {
   serialize(values: Array<V|null>): string {
     const blockNums = this.convertToBlockNumbers(values);
     return blockNums.map((num, index) => {
-      let str = num.toString(36);
+      let str = base62Encode(num);
       // For all blocks besides the last, the block needs to be exactly BLOCK_SIZE characters long.
       if (index < blockNums.length - 1) {
         str = padStart(str, BLOCK_SIZE, '0');
@@ -102,7 +102,7 @@ export class FixedValuesSerializer<V> {
     const values: Array<V> = [];
     for (let i = 0; i < serialized.length; i += BLOCK_SIZE) {
       const block = serialized.substr(i, BLOCK_SIZE);
-      let blockNumber = parseInt(block, 36);
+      let blockNumber = base62Decode(block);
 
       while (blockNumber > 0) {
         assert(entriesLeft.length, 'entriesLeft ran out before finishing deserializing');
@@ -128,6 +128,51 @@ export class FixedValuesSerializer<V> {
     }
     return values;
   }
+}
+
+const CHAR_CODE_0 = 48;
+const CHAR_CODE_LOWER_A = 97;
+const CHAR_CODE_UPPER_A = 65;
+
+/**
+ * Encodes num into a string where the digits are 0-9, a-z, and A-Z in that order.
+ */
+export function base62Encode(num: number): string {
+  const encoded = [];
+  while (num > 0) {
+    const digit = num % 62;
+    let charCode: number;
+    if (digit < 10) {
+      charCode = CHAR_CODE_0 + digit;
+    } else if (digit < 36) {
+      charCode = CHAR_CODE_LOWER_A + (digit - 10);
+    } else {
+      charCode = CHAR_CODE_UPPER_A + (digit - 36);
+    }
+    encoded.unshift(String.fromCharCode(charCode));
+    num = Math.floor(num / 62);
+  }
+  return encoded.join('');
+}
+
+/**
+ * Decodes encoded where the digits are 0-9, a-z, and A-Z in that order.
+ */
+export function base62Decode(encoded: string): number {
+  let num = 0;
+  for (let i = 0; i < encoded.length; i++) {
+    const charCode = encoded.charCodeAt(encoded.length - 1 - i);
+    let digit: number;
+    if (charCode >= CHAR_CODE_LOWER_A) {
+      digit = charCode - CHAR_CODE_LOWER_A + 10;
+    } else if (charCode >= CHAR_CODE_UPPER_A) {
+      digit = charCode - CHAR_CODE_UPPER_A + 36;
+    } else {
+      digit = charCode - CHAR_CODE_0;
+    }
+    num += digit * Math.pow(62, i);
+  }
+  return num;
 }
 
 function remove<T>(arr: Array<T>, value: T) {

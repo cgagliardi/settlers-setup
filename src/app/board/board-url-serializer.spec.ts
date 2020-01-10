@@ -32,9 +32,9 @@ describe('board-url-serializer', () => {
 
   it('serializes Standard board', () => {
     const value = serialize(standardBoard);
-    expect(extractPart(value, 0)).toBe('ot6c');
-    expect(extractPart(value, 1)).toBe('11z8aya1');
-    expect(extractPart(value, 2)).toBe('2qas866jf9');
+    expect(extractPart(value, 0)).toBe('4R8g');
+    expect(extractPart(value, 1)).toBe('1sePYp3');
+    expect(extractPart(value, 2)).toBe('xv56o3Y11');
     const deserialized = deserialize(value);
 
     const ports = standardBoard.ports;
