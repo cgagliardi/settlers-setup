@@ -1,14 +1,20 @@
 /**
  * @fileoverview FixedValuesSerializer is used to serialize a list of limited values to a lower
- * alpha-numeric string. This is used for efficiently serializing a list of enums to a URL.
+ * alpha-numeric string. In order to serialize/deserialize a list, the list must be of a fixed size
+ * with a fixed set of possible values. It must be known how much of each value will be in the
+ * array.
  *
  * Serialization follows these steps.
- * 1. Convert the input values to integers from 1 to N, where N is the number of possible values.
- *    Any instances of undefined or null in the input is set to 0.
+ * 1. For each value, convert the value to integers from 1 to N, where N is the number of
+ *    possible values. As it progresses through the input, N will decrease as the possible values
+ *    remaining values descreases.
  * 2. Combine the numbers from step 1 into a single number. This is done by creating a base N number
- *    where each "digit" is a value from step 1. If the base N number is > Number.MAX_SAFE_INTEGER,
- *    multiple base N numbers are generated. These generated values are called "blocks". Note that
- *    the max is technically MAX_BLOCK_INTEGER.
+ *    where each "digit" is a value from step 1. The base N actually changes per digit. For the
+ *    first digit, it will be full set of possible values. However, as the list of possible values
+ *    decreases (because there are none of such value left), the base of the higher digits
+ *    decreases accordingly.
+ *    If the generated number is > Number.MAX_SAFE_INTEGER, multiple numbers are generated. These
+ *    generated values are called "blocks". Note that the max is technically MAX_BLOCK_INTEGER.
  * 3. For each block from step 2, convert the block to a 10 character base 36 string. A base36
  *    string is lower alpha-numeric characters. The last number may be less than 10 characters,
  *    since deserialization can infer the last characters.
@@ -28,31 +34,13 @@ const MAX_BLOCK_INTEGER = Math.pow(36, BLOCK_SIZE);
  * number of possible values. See the fileoverview for more details.
  */
 export class FixedValuesSerializer<V> {
-  private readonly valuesPerBlock: number;
-  private readonly setSize: number;
-  private readonly setBase: number;
-
   /**
    * @param valueSet The possibe values that can be provided to serialize.
    */
-  constructor(private readonly valueSet: V[]) {
-    this.setSize = valueSet.length;
-    this.setBase = this.setSize + 1;
-    assert(this.setBase < 36);
+  constructor(private readonly valueSet: V[]) {}
 
-    // Calculate how many values can fit into 10 base 36 characters.
-    let valuesPerBlock = 0;
-    let n = this.setSize;
-    while (n < MAX_BLOCK_INTEGER) {
-      valuesPerBlock++;
-      n *= this.setSize;
-    }
-    this.valuesPerBlock = valuesPerBlock - 1;
-  }
-
-  serialize(values: Array<V|null|undefined>): string {
-    const valueNums = this.convertToNumbers(values);
-    const blockNums = this.convertToBlockNumbers(valueNums);
+  serialize(values: Array<V|null>): string {
+    const blockNums = this.convertToBlockNumbers(values);
     return blockNums.map((num, index) => {
       let str = num.toString(36);
       // For all blocks besides the last, the block needs to be exactly BLOCK_SIZE characters long.
@@ -64,89 +52,86 @@ export class FixedValuesSerializer<V> {
   }
 
   /**
-   * Converts values to integers where null|undefined is 0 and values are their index in
-   * valueSet + 1.
-   */
-  private convertToNumbers(values: Array<V|null|undefined>): number[] {
-    return values.map(v => {
-      if (v === null || v === undefined) {
-        return 0;
-      }
-      const i = this.valueSet.indexOf(v);
-      assert(i > -1, 'Unrecognized value ' + v);
-      return i + 1;
-    });
-  }
-
-  /**
    * Packs groups of valueNums into numbers < MAX_BLOCK_INTEGER. This is done by essentially
    * generating a base setSize number where each 'digit' is an entry in valueNums.
    * @param valueNums Numbers between [0, setSize).
    */
-  private convertToBlockNumbers(valueNums: number[]): number[] {
+  private convertToBlockNumbers(values: V[]): number[] {
+    const valuesLeft = values.slice();
+    const valueSet = this.valueSet.slice();
+
     const blockNumbers: number[] = [];
     let currentBlock = 0;
-    let digit = 0;
+    let scalar = 1;
     function appendCurrent() {
       assert(currentBlock < MAX_BLOCK_INTEGER);
       blockNumbers.push(currentBlock);
       currentBlock = 0;
-      digit = 0;
+      scalar = 1;
     }
 
-    for (const valueNum of valueNums) {
-      currentBlock += valueNum * Math.pow(this.setBase, digit);
-      digit++;
-      if (digit >= this.valuesPerBlock) {
+    for (const value of values) {
+      const index = valueSet.indexOf(value);
+      assert(index > -1, `Cannot find ${value} in valueSet`);
+      const valueNum = index + 1;
+
+      if (currentBlock + valueNum * scalar > MAX_BLOCK_INTEGER) {
         appendCurrent();
       }
+
+      currentBlock += valueNum * scalar;
+
+      scalar *= valueSet.length + 1;
+
+      valuesLeft.shift();
+      if (valuesLeft.indexOf(value) === -1) {
+        remove(valueSet, value);
+      }
     }
-    if (digit > 0) {
-      // The last block wasn't a full set of values.
+    if (scalar > 1) {
+      // Append the final block.
       appendCurrent();
     }
     return blockNumbers;
   }
 
-  deserialize(value: string): Array<V|undefined> {
-    const values: Array<V|undefined> = [];
-    for (let i = 0; i < value.length; i += BLOCK_SIZE) {
-      const block = value.substr(i, BLOCK_SIZE);
-      const blockNumber = parseInt(block, 36);
-      const valueNums = baseNEncode(blockNumber, this.setBase);
-      assert(valueNums.length <= this.valuesPerBlock);
+  deserialize(serialized: string, entrySet: Array<V>): Array<V> {
+    const entriesLeft = entrySet;
+    const valueSet = this.valueSet.slice();
 
-      for (let j = valueNums.length - 1; j >= 0; j--) {
-        values.push(this.numToValue(valueNums[j]));
-      }
-      // If we're not on the last block, but we didn't extract valuesPerBlock, that means the
-      // values at the end of the block are undefined. We don't do this for the lastBlock because
-      // undefineds at the end of the list are ignored.
-      const isLastBlock = i + BLOCK_SIZE >= value.length;
-      if (!isLastBlock) {
-        for (let j = valueNums.length; j < this.valuesPerBlock; j++) {
-          values.push(undefined);
+    const values: Array<V> = [];
+    for (let i = 0; i < serialized.length; i += BLOCK_SIZE) {
+      const block = serialized.substr(i, BLOCK_SIZE);
+      let blockNumber = parseInt(block, 36);
+
+      while (blockNumber > 0) {
+        assert(entriesLeft.length, 'entriesLeft ran out before finishing deserializing');
+        assert(valueSet.length, 'valueSet ran out before finishing deserializing');
+
+        const base = valueSet.length + 1;
+        const num = blockNumber % base;
+
+        // Remove num from blockNumber.
+        blockNumber = Math.floor(blockNumber / base);
+
+        assert(num >= 1 && num <= valueSet.length, 'unexpected value number ' + num);
+        const value = valueSet[num - 1];
+        values.push(value);
+
+        const entryIndex = entriesLeft.indexOf(value);
+        assert(entryIndex > -1, 'Value not found in entrySet: ' + value);
+        entriesLeft.splice(entryIndex, 1);
+        if (entriesLeft.indexOf(value) === -1) {
+          remove(valueSet, value);
         }
       }
     }
     return values;
   }
-
-  private numToValue(num: number): V|undefined {
-    assert(num >= 0 && num <= this.setSize, 'unexpected value number ' + num);
-    if (num === 0) {
-      return undefined;
-    }
-    return this.valueSet[num - 1];
-  }
 }
 
-function baseNEncode(num: number, base: number): number[] {
-  const values: number[] = [];
-  while (num > 0) {
-    const digit = num % base;
-    values.unshift(digit);
-    num = Math.floor(num / base);
-  }
-  return values;
+function remove<T>(arr: Array<T>, value: T) {
+  const i = arr.indexOf(value);
+  assert(i > -1, value + ' not found in array.');
+  arr.splice(i, 1);
 }

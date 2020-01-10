@@ -16,35 +16,28 @@ describe('FixedValuesSerializer', () => {
     enumSerializer = new FixedValuesSerializer([TestEnum.FOO, TestEnum.BAR, TestEnum.BAZ]);
   });
 
-  it('serializes sparse array', () => {
-    // Create an array that's mostly undefined.
-    const input = [];
-    for (let i = 0; i < 16; i++) {
-      input.push(i === 4 ? 3 : undefined);
-    }
-    input.push(7);
-
-    const serialized = numSetSerialier.serialize(input);
-    expect(serialized).toBe('000000196sqw');
-    expect(numSetSerialier.deserialize(serialized)).toEqual(input);
-  });
-
   it('serializes a large input', () => {
     const input = [];
     for (let i = 0; i < 55; i++) {
       input.push(i % 10);
     }
+    const valueSet = copyAndSort(input);
 
     const serialized = numSetSerialier.serialize(input);
-    expect(serialized).toBe('1gi98gfs5t2ycb6pg2gh0qos5rz53t5zv9e1f1b');
-    expect(numSetSerialier.deserialize(serialized)).toEqual(input);
+    expect(serialized).toBe('k5k2k6rjem3bswnh3dufg1ktl0tls5582h6t');
+    expect(numSetSerialier.deserialize(serialized, valueSet)).toEqual(input);
   });
 
   it('serializes enums', () => {
-    const input = [TestEnum.BAR, TestEnum.BAZ, undefined, TestEnum.FOO];
+    const input = [TestEnum.BAR, TestEnum.BAZ, TestEnum.BAZ, TestEnum.FOO];
+    const valueSet = copyAndSort(input);
 
     const serialized = enumSerializer.serialize(input);
-    expect(serialized).toBe('26');
-    expect(enumSerializer.deserialize(serialized)).toEqual(input);
+    expect(serialized).toBe('1y');
+    expect(enumSerializer.deserialize(serialized, valueSet)).toEqual(input);
   });
+
+  function copyAndSort<T>(arr: Array<T>): Array<T> {
+    return arr.slice().sort();
+  }
 });

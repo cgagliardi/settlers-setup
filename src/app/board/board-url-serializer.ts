@@ -26,7 +26,7 @@ const HEX_RESOURCES = [
 ] as ResourceType[];
 const hexResourceSerializer = new FixedValuesSerializer(HEX_RESOURCES);
 
-const ROLL_NUMS = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as number[];
+const ROLL_NUMS = [null, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as number[];
 const rollNumSerializer = new FixedValuesSerializer(ROLL_NUMS);
 
 /**
@@ -38,7 +38,7 @@ const rollNumSerializer = new FixedValuesSerializer(ROLL_NUMS);
  *
  */
 export function serialize(board: Board): string {
-  const version = '0';
+  const version = '1';
   const shape = serializeShape(board.shape);
   const portResources = portResourceSerializer.serialize(board.ports.map(p => p.resource));
   const hexResources = hexResourceSerializer.serialize(board.hexes.map(h => h.resource));
@@ -49,18 +49,32 @@ export function serialize(board: Board): string {
 
 export function deserialize(val: string): Board {
   const version = val[0];
-  assert(version === '0', 'Unsupported serialization version ' + val);
+  assert(version === '1', 'Unsupported serialization version ' + val);
 
   const shape = deserializeShape(val[1]);
-  const board = new Board(BOARD_SPECS[shape]);
+  const boardSpec = BOARD_SPECS[shape];
+  const board = new Board(boardSpec);
 
   const [portVal, hexResourceVal, rollNumVal] = val.substr(2).split('-');
 
-  deserializeEntities(portVal, portResourceSerializer, board.ports,
+  const portResources = boardSpec.beaches().reduce((ports, beach) => {
+    return ports.concat(beach.ports.map(p => p.resource));
+  }, [] as Array<ResourceType>);
+  const hexResources = boardSpec.resources();
+  const rollNums = boardSpec.rollNumbers();
+  // Account for the "null" values that will be in roll numbers, which represents a desert
+  // hex. Desert hexes do not have roll numbers.
+  for (const resource of hexResources) {
+    if (resource === ResourceType.DESERT) {
+      rollNums.push(null);
+    }
+  }
+
+  deserializeEntities(portVal, portResourceSerializer, portResources, board.ports,
       (port, resource) => port.resource = resource);
-  deserializeEntities(hexResourceVal, hexResourceSerializer, board.hexes,
+  deserializeEntities(hexResourceVal, hexResourceSerializer, hexResources, board.hexes,
       (hex, resource) => hex.resource = resource);
-  deserializeEntities(rollNumVal, rollNumSerializer, board.hexes,
+  deserializeEntities(rollNumVal, rollNumSerializer, rollNums, board.hexes,
       (hex, num) => hex.rollNumber = num);
 
   return board;
@@ -89,9 +103,10 @@ function deserializeShape(val: string): BoardShape {
 function deserializeEntities<E, V>(
     serialized: string,
     serializer: FixedValuesSerializer<V>,
+    valueSet: Array<V>,
     list: ReadonlyArray<E>,
     setter: (entity: E, value: V) => {}) {
-  const values = serializer.deserialize(serialized);
+  const values = serializer.deserialize(serialized, valueSet);
   for (let i = 0; i < list.length; i++) {
     if (values[i] !== undefined) {
       setter(list[i], values[i]);

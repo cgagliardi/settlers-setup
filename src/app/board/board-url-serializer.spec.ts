@@ -1,5 +1,5 @@
 import { serialize, deserialize } from './board-url-serializer';
-import { Board, ResourceType, ROLL_NUMBERS } from './board';
+import { Board, ResourceType, ROLL_NUMBERS, BoardSpec } from './board';
 import { BOARD_SPECS, BoardShape } from './board-specs';
 
 describe('board-url-serializer', () => {
@@ -7,13 +7,13 @@ describe('board-url-serializer', () => {
   let expansion56Board: Board;
 
   beforeAll(() => {
-    standardBoard = new Board(BOARD_SPECS[BoardShape.STANDARD]);
-    expansion56Board = new Board(BOARD_SPECS[BoardShape.EXPANSION6]);
+    standardBoard = createBoard(BOARD_SPECS[BoardShape.STANDARD]);
+    expansion56Board = createBoard(BOARD_SPECS[BoardShape.EXPANSION6]);
   });
 
   it('starts with version', () => {
     const value = serialize(standardBoard);
-    expect(value[0]).toBe('0');
+    expect(value[0]).toBe('1');
   });
 
   it('serializes Standard shape', () => {
@@ -31,25 +31,13 @@ describe('board-url-serializer', () => {
   });
 
   it('serializes Standard board', () => {
-    const ports = standardBoard.ports;
-    ports[0].resource = ResourceType.ANY;
-    ports[1].resource = ResourceType.BRICK;
-    ports[2].resource = ResourceType.BRICK;
-    ports[3].resource = ResourceType.WHEAT;
-    ports[4].resource = ResourceType.ORE;
-    ports[5].resource = ResourceType.ORE;
-    ports[6].resource = ResourceType.ANY;
-    ports[7].resource = ResourceType.WOOD;
-    ports[8].resource = ResourceType.ANY;
-
-    fillHexes(standardBoard);
-
     const value = serialize(standardBoard);
-    expect(extractPart(value, 0)).toBe('6h9i0');
-    expect(extractPart(value, 1)).toBe('dmhg8q42er2');
-    expect(extractPart(value, 2)).toBe('027p2sloos21bg');
+    expect(extractPart(value, 0)).toBe('ot6c');
+    expect(extractPart(value, 1)).toBe('11z8aya1');
+    expect(extractPart(value, 2)).toBe('2qas866jf9');
     const deserialized = deserialize(value);
 
+    const ports = standardBoard.ports;
     for (let i = 0; i < ports.length; i++) {
       expect(deserialized.ports[i].resource).toBe(ports[i].resource);
     }
@@ -68,33 +56,22 @@ describe('board-url-serializer', () => {
     return parts[i];
   }
 
-  function fillHexes(board: Board) {
-    let rollNumberIndex = 0;
-    let resourceIndex = 0;
+  function createBoard(spec: BoardSpec): Board {
+    const board = new Board(spec);
 
-    const resourceTypeArray = [] as ResourceType[];
-    for (const resource of Object.values(ResourceType)) {
-      if (resource !== ResourceType.ANY) {
-        resourceTypeArray.push(resource);
-      }
-    }
+    const resources = spec.resources();
+    resources.sort();
+    const rollNums = spec.rollNumbers();
+    rollNums.sort();
 
     for (const hex of board.hexes) {
-      hex.resource = resourceTypeArray[resourceIndex];
-
-      resourceIndex++;
-      if (resourceIndex >= resourceTypeArray.length) {
-        resourceIndex = 0;
-      }
+      hex.resource = resources.shift();
 
       if (hex.resource !== ResourceType.DESERT) {
-        hex.rollNumber = ROLL_NUMBERS[rollNumberIndex];
-
-        rollNumberIndex++;
-        if (rollNumberIndex >= ROLL_NUMBERS.length) {
-          rollNumberIndex = 0;
-        }
+        hex.rollNumber = rollNums.shift();
       }
     }
+
+    return board;
   }
 });
