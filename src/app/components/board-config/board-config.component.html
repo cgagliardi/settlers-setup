@@ -8,9 +8,15 @@
                      formControlName="desertPlacement"
                      [options]="desertPlacements"></app-config-choice>
 
-  <app-config-choice label="Resource Distribution"
-                     formControlName="resourceDistribution"
-                     [options]="resourceDistributions"></app-config-choice>
+  <app-config-slider label="Resource Distribution"
+                     minLabel="Clumped"
+                     maxLabel="Even"
+                     formControlName="resourceDistribution"></app-config-slider>
+
+  <app-config-slider label="Number Distribution"
+                     minLabel="Capitalism"
+                     maxLabel="Communism"
+                     formControlName="numberDistribution"></app-config-slider>
 
   <div class="checkbox">
     <mat-checkbox formControlName="shufflePorts">Shuffle ports</mat-checkbox>

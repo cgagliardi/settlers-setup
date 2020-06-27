@@ -22,13 +22,14 @@
     "@angular/platform-browser-dynamic": "^8.2.14",
     "@angular/router": "^8.2.14",
     "bezier-easing": "^2.1.0",
+    "hammerjs": "^2.0.8",
     "lodash": "^4.17.15",
     "paper": "^0.12.4",
     "rxjs": "~6.4.0",
     "serialize-javascript": ">=2.1.1",
+    "tree-kill": ">=1.2.2",
     "tslib": "^1.10.0",
-    "zone.js": "~0.9.1",
-    "tree-kill": ">=1.2.2"
+    "zone.js": "~0.9.1"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^0.803.22",

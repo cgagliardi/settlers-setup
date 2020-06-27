@@ -85,6 +85,16 @@ export class RandomQueue<T> {
     return this.pop();
   }
 
+  popOneOf(...vals: T[]): T|undefined {
+    const filtered = this.filter(val => vals.indexOf(val) >= 0);
+    const popped = filtered.pop();
+    if (popped === undefined) {
+      return undefined;
+    }
+    this.remove(popped);
+    return popped;
+  }
+
   pop(): T|undefined {
     if (this.isEmpty()) {
       return undefined;

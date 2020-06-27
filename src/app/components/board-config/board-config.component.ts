@@ -4,11 +4,13 @@ import { BoardShape, BOARD_SPECS } from '../../board/board-specs';
 import { BalancedStrategy } from '../../board/strategy/balanced-strategy';
 import { Strategy, DesertPlacement, ResourceDistribution } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
+import { CONFIG_SLIDER_MAX_VALUE } from '../config-slider/config-slider.component';
 
 export interface FormState {
   boardShape: BoardShape;
   desertPlacement: DesertPlacement;
-  resourceDistribution: ResourceDistribution;
+  resourceDistribution: number;
+  numberDistribution: number;
   shufflePorts: boolean;
 }
 
@@ -52,14 +54,11 @@ export class BoardConfigComponent implements OnChanges {
     DesertPlacement.OFF_CENTER,
     DesertPlacement.COAST);
 
-    resourceDistributions = toOptionDef(
-    ResourceDistribution.EVEN,
-    ResourceDistribution.RANDOM);
-
   configForm = this.fb.group({
     boardShape: [this.boardShapes[0].value],
     desertPlacement: [this.desertPlacements[0].value],
-    resourceDistribution: [this.resourceDistributions[0].value],
+    resourceDistribution: CONFIG_SLIDER_MAX_VALUE,
+    numberDistribution: CONFIG_SLIDER_MAX_VALUE,
     shufflePorts: false,
   });
 
@@ -86,7 +85,8 @@ export class BoardConfigComponent implements OnChanges {
     const strategy =
         new BalancedStrategy({
           desertPlacement: state.desertPlacement,
-          resourceDistribution: state.resourceDistribution,
+          resourceDistribution: state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE,
+          numberDistribution: state.numberDistribution / CONFIG_SLIDER_MAX_VALUE,
           shufflePorts: state.shufflePorts,
         });
     return {

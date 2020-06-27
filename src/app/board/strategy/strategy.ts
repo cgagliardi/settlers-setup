@@ -10,12 +10,18 @@ export enum DesertPlacement {
 
 export enum ResourceDistribution {
   EVEN = 'Even',
-  RANDOM = 'Random',
+  CLUMPED = 'Clumped',
 }
 
 export interface StrategyOptions {
   desertPlacement: DesertPlacement;
-  resourceDistribution: ResourceDistribution;
+  // 0 - similar resource types are clumped together.
+  // 0.5 - random
+  // 1 - resources are evenly distrubted.
+  resourceDistribution: number;
+  // 1 - every corner is as balanced as possible.
+  // 0 - corners are either extremely good or extremely bad.
+  numberDistribution: number;
   shufflePorts: boolean;
 }
 

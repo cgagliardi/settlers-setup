@@ -59,3 +59,18 @@ export function findHighestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => num
   }
   return highestVal;
 }
+
+export function findAllHighestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => number): T[]|undefined {
+  let highestVals;
+  let highestNum = Number.MIN_VALUE;
+  for (const val of collection) {
+    const score = fn(val);
+    if (score > highestNum) {
+      highestNum = score;
+      highestVals = [val];
+    } else if (score === highestNum) {
+      highestVals.push(val);
+    }
+  }
+  return highestVals;
+}

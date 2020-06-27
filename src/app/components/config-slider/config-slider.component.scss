@@ -1,0 +1,30 @@
+:host {
+  display: block;
+  margin-bottom: 27px;
+}
+
+h2 {
+  margin: 0 0 -5px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+mat-slider {
+  width: 100%;
+}
+
+.min-label,
+.max-label {
+  font-size: 12px;
+  margin-top: -7px;
+  color: #37474F; // Material Blue Grey 800
+}
+.min-label {
+  float: left;
+  margin-left: 8px;
+}
+.max-label {
+  text-align: right;
+  margin-right: 8px;
+}
