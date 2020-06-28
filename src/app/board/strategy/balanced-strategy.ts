@@ -170,6 +170,8 @@ export class BalancedStrategy implements Strategy {
     // First place the desert.
     this.placeDesert(board);
 
+    const resourceDistributionQueue = this.getResourceDistrubitionQueue();
+
     // Next set the resources on hexes with typed ports such that they don't have their matching
     // resource.
     const hexesWithTypedPorts = board.hexes.filter(hex =>
@@ -177,7 +179,7 @@ export class BalancedStrategy implements Strategy {
         hex.getPortResource() &&
         hex.getPortResource() !== ResourceType.ANY);
     for (const hex of hexesWithTypedPorts) {
-      const strategy = this.selectResourceDistribution();
+      const strategy = resourceDistributionQueue.pop();
       let possibleResources = this.remainingResources.filter(r => r !== hex.getPortResource());
       const neighborResources = hex.getNeighborResources().filter(r => r !== ResourceType.DESERT);
       if (neighborResources.length) {
@@ -206,7 +208,7 @@ export class BalancedStrategy implements Strategy {
         continue;
       }
       let resource: ResourceType;
-      const strategy = this.selectResourceDistribution();
+      const strategy = resourceDistributionQueue.pop();
       if (strategy === ResourceDistribution.EVEN) {
         resource = this.remainingResources.popExcluding(...hex.getNeighborResources());
       } else {
@@ -229,15 +231,16 @@ export class BalancedStrategy implements Strategy {
     return true;
   }
 
-  /**
-   * options.resourceDistribution is a number between 0 and 1.
-   * When placing resources, we have 2 distinct strategies.
-   * In order to provide the full range, we randomly select every time a resouce is placed,
-   * weighting the decision based on options.resourceDistrubtion.
-   */
-  selectResourceDistribution(): ResourceDistribution {
-    return Math.random() <= this.options.resourceDistribution ?
-        ResourceDistribution.EVEN : ResourceDistribution.CLUMPED;
+  getResourceDistrubitionQueue(): RandomQueue<ResourceDistribution> {
+    const queue = new RandomQueue<ResourceDistribution>();
+    const numEven = Math.floor(this.options.resourceDistribution * this.remainingResources.length);
+    for (let i = 0; i < numEven; i++) {
+      queue.push(ResourceDistribution.EVEN);
+    }
+    for (let i = numEven; i < this.remainingResources.length; i++) {
+      queue.push(ResourceDistribution.CLUMPED);
+    }
+    return queue;
   }
 
   placeDesert(board: Board) {
