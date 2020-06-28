@@ -174,32 +174,31 @@ export class BalancedStrategy implements Strategy {
 
     // Next set the resources on hexes with typed ports such that they don't have their matching
     // resource.
-    const hexesWithTypedPorts =
-        board.hexes.filter(hex => !hex.resource && hex.getTypedPortResources().size);
-    for (const hex of hexesWithTypedPorts) {
-      const strategy = resourceDistributionQueue.pop();
-      let possibleResources = this.remainingResources.vals.slice();
-      if (!this.options.allowResourceOnPort) {
-        possibleResources = possibleResources.filter(r => !hex.getTypedPortResources().has(r));
-      }
-      const neighborResources = hex.getNeighborResources().filter(r => r !== ResourceType.DESERT);
-      if (neighborResources.length) {
-        if (strategy === ResourceDistribution.CLUMPED) {
-          const possible2 = possibleResources.filter(r => neighborResources.includes(r));
-          if (possible2.length) {
-            possibleResources = possible2;
+    if (!this.options.allowResourceOnPort) {
+      const hexesWithTypedPorts =
+          board.hexes.filter(hex => !hex.resource && hex.getTypedPortResources().size);
+      for (const hex of hexesWithTypedPorts) {
+        const strategy = resourceDistributionQueue.pop();
+        let possibleResources =
+            this.remainingResources.vals.filter(r => !hex.getTypedPortResources().has(r));
+        const neighborResources = hex.getNeighborResources().filter(r => r !== ResourceType.DESERT);
+        if (neighborResources.length) {
+          if (strategy === ResourceDistribution.CLUMPED) {
+            const possible2 = possibleResources.filter(r => neighborResources.includes(r));
+            if (possible2.length) {
+              possibleResources = possible2;
+            }
+          } else {
+            possibleResources = possibleResources.filter(r => !neighborResources.includes(r));
           }
-        } else {
-          possibleResources = possibleResources.filter(r => !neighborResources.includes(r));
         }
+        const resource = sample(possibleResources);
+        if (!resource) {
+          return false;
+        }
+        hex.resource = (resource as ResourceType);
+        this.remainingResources.remove(hex.resource);
       }
-      const resource = sample(possibleResources);
-      if (!resource) {
-        console.log('!!!! returning');
-        return false;
-      }
-      hex.resource = (resource as ResourceType);
-      this.remainingResources.remove(hex.resource);
     }
 
     // Now set all remaining hexes at random, but without any of the same resources touching itself.
@@ -225,7 +224,6 @@ export class BalancedStrategy implements Strategy {
       }
       if (!resource) {
         // Strategy failed.
-        console.log('returning2!!!');
         return false;
       }
       hex.resource = resource;
