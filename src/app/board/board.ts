@@ -159,7 +159,7 @@ export class Hex {
   rollNumber: number|null = null;
   score: number|null = null;
   // Cached values.
-  private portResource: ResourceType|null|undefined;
+  private typedPortResources: Set<ResourceType>|undefined;
   private neighbors: Hex[]|undefined;
   private corners: Corner[]|undefined;
 
@@ -177,7 +177,7 @@ export class Hex {
     this.resource = null;
     this.rollNumber = null;
     this.score = null;
-    this.portResource = undefined;
+    this.typedPortResources = undefined;
   }
 
   /**
@@ -214,14 +214,16 @@ export class Hex {
   /**
    * Note: this function is lazy-cached, so if it's called before the board is initialized, it will
    * always return an incorrect value.
-   * @returns The ResourceTypes of the neighboring port if any such port exists.
+   * @returns The ResourceTypes of the neighboring ports with "ANY" removed from the results.
    */
-  getPortResource(): ResourceType|null {
-    if (this.portResource === undefined) {
-      const portCorner = this.getCorners().find(corner => !!corner.port);
-      this.portResource = portCorner ? portCorner.port.resource : null;
+  getTypedPortResources(): Set<ResourceType>|null {
+    if (this.typedPortResources === undefined) {
+      const resources = this.getCorners()
+          .filter(c => !!c.port && c.port.resource !== ResourceType.ANY)
+          .map(c => c.port.resource);
+      this.typedPortResources = new Set(resources);
     }
-    return this.portResource;
+    return this.typedPortResources;
   }
 
   /**

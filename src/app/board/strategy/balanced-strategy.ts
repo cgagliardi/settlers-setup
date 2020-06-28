@@ -174,13 +174,12 @@ export class BalancedStrategy implements Strategy {
 
     // Next set the resources on hexes with typed ports such that they don't have their matching
     // resource.
-    const hexesWithTypedPorts = board.hexes.filter(hex =>
-        !hex.resource &&
-        hex.getPortResource() &&
-        hex.getPortResource() !== ResourceType.ANY);
+    const hexesWithTypedPorts =
+        board.hexes.filter(hex => !hex.resource && hex.getTypedPortResources().size);
     for (const hex of hexesWithTypedPorts) {
       const strategy = resourceDistributionQueue.pop();
-      let possibleResources = this.remainingResources.filter(r => r !== hex.getPortResource());
+      let possibleResources: RandomQueue<ResourceType> =
+          this.remainingResources.filter(r => !hex.getTypedPortResources().has(r));
       const neighborResources = hex.getNeighborResources().filter(r => r !== ResourceType.DESERT);
       if (neighborResources.length) {
         if (strategy === ResourceDistribution.CLUMPED) {
@@ -192,11 +191,12 @@ export class BalancedStrategy implements Strategy {
           possibleResources = possibleResources.filter(r => !neighborResources.includes(r));
         }
       }
-      hex.resource = possibleResources.pop();
-      if (!hex.resource) {
+      const resource = possibleResources.pop();
+      if (!resource) {
         console.log('!!!! returning');
         return false;
       }
+      hex.resource = (resource as ResourceType);
       this.remainingResources.remove(hex.resource);
     }
 
