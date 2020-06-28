@@ -5,7 +5,6 @@ import { RandomQueue } from '../random-queue';
 import { findAllLowestBy, hasAll, sumByKey, findHighestBy, findAllHighestBy } from 'src/app/util/collections';
 import { BoardShape } from '../board-specs';
 
-import last from 'lodash/last';
 import mean from 'lodash/mean';
 import pull from 'lodash/pull';
 import round from 'lodash/round';
@@ -29,10 +28,28 @@ const FIRST_MIN_TIME = 400;
 // numbers to see which produced the optimal score.
 const HEX_CORNER_POWER = 6;
 
-const LOW_SCORE = 1.5;
-const HIGH_SCORE = 3.9;
+const LOW_SCORE = 3.7;
+const HIGH_SCORE = 21;
 
 let firstGenerated = false;
+
+enum NumberPlacement {
+  COMMUNISM = 0,
+  CAPITALISM = 1,
+}
+
+function createRandomQueueByPercent<T>(
+      percent: number, size: number, lowValue: T, highValue: T): RandomQueue<T> {
+  const queue = new RandomQueue<T>();
+  const numHigh = Math.floor(percent * size);
+  for (let i = 0; i < numHigh; i++) {
+    queue.push(highValue);
+  }
+  for (let i = numHigh; i < size; i++) {
+    queue.push(lowValue);
+  }
+  return queue;
+}
 
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
@@ -101,18 +118,17 @@ export class BalancedStrategy implements Strategy {
    * @returns A number that gives the quality of the board, where the lower the number, the better
    * the board.
    */
-  private scoreBoard(): [number, {standardDeviation: number, highestCorner: number}] {
-    // Compute the standard deviation of the corner scores.
+  private scoreBoard(): [number, {variance: number, highestCorner: number}] {
+    // Compute the variance of the corner scores.
     this.scoreHexesAndCorners(true /* balanceCoastAndDesert */);
     const scores = this.board.corners.map(c => c.score);
     const scoreMean = mean(scores);
     const scoreSum = sum(scores.map(s => Math.pow(scoreMean - s, 2)));
-    const standardDeviation = Math.sqrt(scoreSum / this.board.corners.length);
+    const variance = scoreSum / this.board.corners.length;
 
     this.scoreHexesAndCorners(false /* balanceCoastAndDesert */);
     const highestCorner = findHighestBy(this.board.corners, c => c.score).score;
-
-    return [standardDeviation, {standardDeviation, highestCorner}];
+    return [variance + (highestCorner - 10), {variance, highestCorner}];
   }
 
   private generateSingleBoard(spec: BoardSpec): Board {
@@ -148,15 +164,18 @@ export class BalancedStrategy implements Strategy {
     this.initialResources.remove(inlandHex.resource);
     pull(this.remainingHexes, inlandHex);
 
+    const numberStrategies = createRandomQueueByPercent(
+        this.options.numberDistribution, this.remainingHexes.length,
+        NumberPlacement.CAPITALISM, NumberPlacement.COMMUNISM);
     let resource;
     // tslint:disable-next-line:no-conditional-assignment
     while (resource = this.initialResources.pop()) {
-      this.placeNumber(resource);
+      this.placeNumber(numberStrategies.pop(), resource);
     }
 
     // Place the remaining roll numbers until there are none left.
     while (this.remainingHexes.length) {
-      this.placeNumber();
+      this.placeNumber(numberStrategies.pop());
     }
 
     return board;
@@ -170,7 +189,8 @@ export class BalancedStrategy implements Strategy {
     // First place the desert.
     this.placeDesert(board);
 
-    const resourceDistributionQueue = this.getResourceDistrubitionQueue();
+    const resourceDistributionQueue = createRandomQueueByPercent(this.options.resourceDistribution,
+        this.remainingResources.length, ResourceDistribution.CLUMPED, ResourceDistribution.EVEN);
 
     // Next set the resources on hexes with typed ports such that they don't have their matching
     // resource.
@@ -263,18 +283,6 @@ export class BalancedStrategy implements Strategy {
     hex.resource = this.remainingResources.pop();
   }
 
-  getResourceDistrubitionQueue(): RandomQueue<ResourceDistribution> {
-    const queue = new RandomQueue<ResourceDistribution>();
-    const numEven = Math.floor(this.options.resourceDistribution * this.remainingResources.length);
-    for (let i = 0; i < numEven; i++) {
-      queue.push(ResourceDistribution.EVEN);
-    }
-    for (let i = numEven; i < this.remainingResources.length; i++) {
-      queue.push(ResourceDistribution.CLUMPED);
-    }
-    return queue;
-  }
-
   placeDesert(board: Board) {
     if (this.desertPlacement === DesertPlacement.CENTER) {
       const coords = this.getCenterCoords(board);
@@ -327,7 +335,7 @@ export class BalancedStrategy implements Strategy {
    * Scores every corner and every hex of the board, then places the highest available number of the
    * lowest valued hex.
    */
-  private placeNumber(resourceType: null|ResourceType = null) {
+  private placeNumber(numberStrategy: NumberPlacement, resourceType: null|ResourceType = null) {
     this.scoreHexesAndCorners();
 
     let potentialHexes = this.remainingHexes;
@@ -335,15 +343,10 @@ export class BalancedStrategy implements Strategy {
       potentialHexes = potentialHexes.filter(h => h.resource === resourceType);
     }
 
-    if (this.options.numberDistribution === 1) {
+    if (numberStrategy === NumberPlacement.COMMUNISM) {
       potentialHexes = findAllLowestBy(potentialHexes, h => h.score);
-    } else if (this.options.numberDistribution === 0) {
-      potentialHexes = findAllHighestBy(potentialHexes, h => h.score);
     } else {
-      sortBy(potentialHexes, h => h.score);
-      const targetIndex =
-          Math.floor((1 - this.options.numberDistribution) * potentialHexes.length);
-      potentialHexes = [potentialHexes[targetIndex]];
+      potentialHexes = findAllHighestBy(potentialHexes, h => h.score);
     }
     const hex = sample(potentialHexes);
     pull(this.remainingHexes, hex);
