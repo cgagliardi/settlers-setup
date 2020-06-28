@@ -196,7 +196,7 @@ export class BalancedStrategy implements Strategy {
         if (!resource) {
           return false;
         }
-        hex.resource = (resource as ResourceType);
+        hex.resource = resource;
         this.remainingResources.remove(hex.resource);
       }
     }
@@ -204,31 +204,63 @@ export class BalancedStrategy implements Strategy {
     // Now set all remaining hexes at random, but without any of the same resources touching itself.
     // If we are unable to replace a hex without it touching the same resource type, return false
     // so that the function can be ran again on a new board.
-    for (const hex of board.hexes) {
-      if (hex.resource) {
-        continue;
-      }
-      let resource: ResourceType;
-      const strategy = resourceDistributionQueue.pop();
-      if (strategy === ResourceDistribution.EVEN) {
-        resource = this.remainingResources.popExcluding(...hex.getNeighborResources());
+    this.remainingHexes = board.hexes.filter(h => !h.resource);
+    assert(this.remainingHexes.length === this.remainingResources.length);
+    let resourceDistribution: ResourceDistribution;
+    // tslint:disable-next-line:no-conditional-assignment
+    while (resourceDistribution = resourceDistributionQueue.pop()) {
+      let success: boolean;
+      if (resourceDistribution === ResourceDistribution.CLUMPED) {
+        success = this.placeResourceClumped(board);
       } else {
-        // strategy === ResourceDistribution.CLUMPED
-        const neighborResources = hex.getNeighborResources();
-        if (neighborResources.length) {
-          resource = this.remainingResources.popOneOf(...hex.getNeighborResources());
-        }
-        if (!resource) {
-          resource = this.remainingResources.pop();
-        }
+        success = this.placeResourceEven();
       }
-      if (!resource) {
+      if (!success) {
         // Strategy failed.
         return false;
       }
-      hex.resource = resource;
+      assert(this.remainingHexes.length === this.remainingResources.length);
+      assert(this.remainingHexes.length === resourceDistributionQueue.length);
     }
     return true;
+  }
+
+  placeResourceClumped(board: Board): boolean {
+    const availableResources = new Set(this.remainingResources.vals);
+    const hasExistingResource =
+        board.hexes.findIndex(h => h.resource && availableResources.has(h.resource)) > -1;
+    if (!hasExistingResource) {
+      this.placeResourceRandom();
+      return true;
+    }
+    // Find all of the hexes where we could place a clumped resource.
+    const candidateHexes = this.remainingHexes.filter(h =>
+        h.getNeighbors().findIndex(n => availableResources.has(n.resource)) > -1);
+    if (!candidateHexes.length) {
+      return false;
+    }
+    const hex = sample(candidateHexes);
+    const candidateResources =
+        hex.getNeighbors().filter(n => availableResources.has(n.resource)).map(n => n.resource);
+    hex.resource = sample(candidateResources);
+    this.remainingResources.remove(hex.resource);
+    pull(this.remainingHexes, hex);
+    return true;
+  }
+
+  placeResourceEven(): boolean {
+    const hex = this.remainingHexes.pop();
+    const resource = this.remainingResources.popExcluding(...hex.getNeighborResources());
+    if (!resource) {
+      return false;
+    }
+    hex.resource = resource;
+    return true;
+  }
+
+  placeResourceRandom() {
+    const hex = this.remainingHexes.pop();
+    hex.resource = this.remainingResources.pop();
   }
 
   getResourceDistrubitionQueue(): RandomQueue<ResourceDistribution> {
@@ -276,6 +308,7 @@ export class BalancedStrategy implements Strategy {
       const hex = sample(availableHexes);
       assert(hex);
       hex.resource = ResourceType.DESERT;
+      pull(availableHexes, hex);
     }
   }
 
