@@ -23,6 +23,8 @@ export interface StrategyOptions {
   // 0 - corners are either extremely good or extremely bad.
   numberDistribution: number;
   shufflePorts: boolean;
+  // Allow a resource hex to be placed next to a port of the same type.
+  allowResourceOnPort: boolean;
 }
 
 /**

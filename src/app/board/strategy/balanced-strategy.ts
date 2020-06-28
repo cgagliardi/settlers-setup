@@ -178,8 +178,10 @@ export class BalancedStrategy implements Strategy {
         board.hexes.filter(hex => !hex.resource && hex.getTypedPortResources().size);
     for (const hex of hexesWithTypedPorts) {
       const strategy = resourceDistributionQueue.pop();
-      let possibleResources: RandomQueue<ResourceType> =
-          this.remainingResources.filter(r => !hex.getTypedPortResources().has(r));
+      let possibleResources = this.remainingResources.vals.slice();
+      if (!this.options.allowResourceOnPort) {
+        possibleResources = possibleResources.filter(r => !hex.getTypedPortResources().has(r));
+      }
       const neighborResources = hex.getNeighborResources().filter(r => r !== ResourceType.DESERT);
       if (neighborResources.length) {
         if (strategy === ResourceDistribution.CLUMPED) {
@@ -191,7 +193,7 @@ export class BalancedStrategy implements Strategy {
           possibleResources = possibleResources.filter(r => !neighborResources.includes(r));
         }
       }
-      const resource = possibleResources.pop();
+      const resource = sample(possibleResources);
       if (!resource) {
         console.log('!!!! returning');
         return false;
@@ -222,7 +224,7 @@ export class BalancedStrategy implements Strategy {
         }
       }
       if (!resource) {
-        // Strategy failed, just take one at random.
+        // Strategy failed.
         console.log('returning2!!!');
         return false;
       }
@@ -342,6 +344,15 @@ export class BalancedStrategy implements Strategy {
       }
       const notes = [];
       if (corner.port) {
+        if (this.options.allowResourceOnPort) {
+          const matchingReourceHexes =
+              corner.getHexes().filter(h => h.resource === corner.port.resource);
+          if (matchingReourceHexes.length) {
+            notes.push(['Has matching port']);
+          }
+          score += sum(
+              matchingReourceHexes.map(hex => this.getRollNumValue(hex.rollNumber, 2) * 0.3));
+        }
         notes.push(['Has port']);
         score += 3;
       }

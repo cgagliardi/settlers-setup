@@ -12,6 +12,7 @@ export interface FormState {
   resourceDistribution: number;
   numberDistribution: number;
   shufflePorts: boolean;
+  allowResourceOnPort: boolean;
 }
 
 interface OptionDef {
@@ -60,6 +61,7 @@ export class BoardConfigComponent implements OnChanges {
     resourceDistribution: CONFIG_SLIDER_MAX_VALUE,
     numberDistribution: CONFIG_SLIDER_MAX_VALUE,
     shufflePorts: false,
+    allowResourceOnPort: false,
   });
 
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
@@ -88,6 +90,7 @@ export class BoardConfigComponent implements OnChanges {
           resourceDistribution: state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE,
           numberDistribution: state.numberDistribution / CONFIG_SLIDER_MAX_VALUE,
           shufflePorts: state.shufflePorts,
+          allowResourceOnPort: state.allowResourceOnPort,
         });
     return {
       formState: state,
