@@ -8,16 +8,13 @@ import { AppComponent } from './app.component';
 import { ComponentsModule } from './components/components.module';
 import { MatDialogModule } from '@angular/material';
 
-// This is required for dragging to work on the mat-slider.
-import 'hammerjs';
-
 @NgModule({
   declarations: [
     AppComponent
   ],
   imports: [
-    BrowserAnimationsModule,
     BrowserModule,
+    BrowserAnimationsModule,
     MatButtonModule,
     MatDialogModule,
     MatIconModule,

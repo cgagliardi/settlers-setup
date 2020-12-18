@@ -126,6 +126,7 @@
           }
         }
       }
-    }},
+    }
+  },
   "defaultProject": "settlers-setup"
 }

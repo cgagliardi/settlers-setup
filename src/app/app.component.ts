@@ -16,6 +16,7 @@ const BOARD_URL_REGEX = /\/board\/([a-z\dA-Z\-]+)/;
   providers: [Location, {provide: LocationStrategy, useClass: PathLocationStrategy}]
 })
 export class AppComponent implements OnInit {
+  title = 'settlers-setup';
   @ViewChild('boardConfigSlider', {static: true}) boardConfigSlider: SlidingCardComponent;
   @ViewChild('boardConfig', {static: true}) boardConfig: BoardConfigComponent;
 

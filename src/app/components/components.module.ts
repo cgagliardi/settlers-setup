@@ -4,25 +4,25 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialogModule, MatCardModule, MatRadioModule, MatButtonModule, MatCheckboxModule } from '@angular/material';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { AboutComponent } from './about/about.component';
-import { CatanBoardComponent } from './catan-board/catan-board.component';
-import { FooterComponent } from './footer/footer.component';
 import { BoardConfigComponent } from './board-config/board-config.component';
+import { CatanBoardComponent } from './catan-board/catan-board.component';
 import { ConfigChoiceComponent } from './config-choice/config-choice.component';
-import { SlidingCardComponent } from './sliding-card/sliding-card.component';
-import { ReactiveFormsModule } from '@angular/forms';
 import { ConfigSliderComponent } from './config-slider/config-slider.component';
+import { FooterComponent } from './footer/footer.component';
+import { SlidingCardComponent } from './sliding-card/sliding-card.component';
 
 @NgModule({
   declarations: [
     AboutComponent,
-    CatanBoardComponent,
-    FooterComponent,
     BoardConfigComponent,
+    CatanBoardComponent,
     ConfigChoiceComponent,
-    SlidingCardComponent,
     ConfigSliderComponent,
+    FooterComponent,
+    SlidingCardComponent,
   ],
   entryComponents: [
     AboutComponent,
@@ -38,7 +38,8 @@ import { ConfigSliderComponent } from './config-slider/config-slider.component';
     MatCardModule,
     MatSliderModule,
     ReactiveFormsModule,
-  ], exports: [
+  ],
+  exports: [
     AboutComponent,
     CatanBoardComponent,
     FooterComponent,
