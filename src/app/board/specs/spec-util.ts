@@ -75,7 +75,7 @@ export function generateStandardShapedBoard(board: Board): HexGrid {
   return hexes;
 }
 
-export function inCoords(hex: Hex, coords: number[]): boolean {
+export function inCoords(hex: Hex, coords: CoordinatePairs): boolean {
   for (let i = 0; i < coords.length; i += 2) {
     const x = coords[i];
     const y = coords[i + 1];
@@ -84,4 +84,24 @@ export function inCoords(hex: Hex, coords: number[]): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Used for boards like Seafarers #1 and The Desert Dragons where there's a main island that is
+ * allowed desert pieces, and sub-islands that allow gold.
+ * @param islandCoords The hex coordinates of sub-islands which allow gold but no deserts.
+ * @param hex The hex is consideration.
+ * @param resource The resource type in consideration.
+ */
+export function allowResourcesWithMainIslandRules(
+    islandCoords: CoordinatePairs, hex: Hex, resource: ResourceType): boolean {
+  if (resource !== ResourceType.GOLD && resource !== ResourceType.DESERT) {
+    return true;
+  }
+  const hexOnIsland = inCoords(hex, islandCoords);
+  if (resource === ResourceType.GOLD) {
+    return hexOnIsland;
+  } else { // desert
+    return !hexOnIsland;
+  }
 }

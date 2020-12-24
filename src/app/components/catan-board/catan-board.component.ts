@@ -236,6 +236,10 @@ export class CatanBoardComponent implements OnChanges {
       this.finalHexYs.push(item.position.y);
     }
 
+    if (this.board.spec.dragons) {
+      this.renderDragons();
+    }
+
     if (this.showStats) {
       const bestCorner = findHighestBy(this.board.corners, c => c.score);
       const worstCorner = findLowestBy(this.board.corners, c => c.score);
@@ -355,7 +359,7 @@ export class CatanBoardComponent implements OnChanges {
   /**
    * Renders the score at a corner. This is only used for debugging.
    */
-  private renderCorner(corner: Corner, isBest: boolean, isWorst: boolean): paper.Path {
+  private renderCorner(corner: Corner, isBest: boolean, isWorst: boolean): paper.Group {
     const scale = this.sizeAndScale.scale;
     const group = new paper.Group();
 
@@ -379,7 +383,7 @@ export class CatanBoardComponent implements OnChanges {
       console.log(corner);
     };
 
-    return circle;
+    return group;
   }
 
   private renderBeach(beach: Beach) {
@@ -492,6 +496,32 @@ export class CatanBoardComponent implements OnChanges {
     label.fillColor = new paper.Color(opts.color || 'black');
     label.justification = 'center';
     return label;
+  }
+
+  private renderDragons() {
+    const dragonCoordinates = this.board.spec.dragons;
+    for (let i = 0; i < dragonCoordinates.length; i += 2) {
+      this.renderDragon({x: dragonCoordinates[i], y: dragonCoordinates[i + 1]});
+    }
+  }
+
+  private renderDragon(corner: Coordinate) {
+    const scale = this.sizeAndScale.scale;
+    const group = new paper.Group();
+
+    const point = this.getCornerPoint(corner);
+    const circle = new paper.Path.Circle(point, 13 * scale);
+    circle.fillColor = new paper.Color('#689F38');
+    circle.shadowColor = new paper.Color(0, 0.8);
+    circle.shadowOffset = new paper.Point(0.2 * scale, 0.2 * scale);
+    circle.shadowBlur = 1 * scale;
+    group.addChild(circle);
+
+    const textPoint = point.clone();
+    textPoint.x += 1;
+    textPoint.y += -2;
+    const text = this.renderText('🐉', textPoint, {size: 14});
+    group.addChild(text);
   }
 
 

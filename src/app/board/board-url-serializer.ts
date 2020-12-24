@@ -113,6 +113,8 @@ function serializeShape(shape: BoardShape): string {
       return '2';
     case BoardShape.SEAFARERS1:
       return '3';
+    case BoardShape.DRAGONS:
+      return 'd';
   }
   throw new Error('Unsupported shape ' + shape);
 }
@@ -125,6 +127,8 @@ function deserializeShape(val: string): BoardShape {
       return BoardShape.EXPANSION6;
     case '3':
       return BoardShape.SEAFARERS1;
+    case 'd':
+      return BoardShape.DRAGONS;
   }
   throw new Error('Unsupported shape ' + val);
 }

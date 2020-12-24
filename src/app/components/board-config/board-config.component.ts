@@ -6,6 +6,7 @@ import { Strategy, DesertPlacement, ResourceDistribution } from '../../board/str
 import { FormBuilder } from '@angular/forms';
 import { CONFIG_SLIDER_MAX_VALUE } from '../config-slider/config-slider.component';
 import { BoardShape } from 'src/app/board/specs/shapes-enum';
+import { RandomStrategy } from 'src/app/board/strategy/random-strategy';
 
 export interface FormState {
   boardShape: BoardShape;
@@ -47,6 +48,7 @@ function toOptionDef(...values: Array<string|[string, string]>): OptionDef[] {
 })
 export class BoardConfigComponent implements OnChanges {
   boardShapes = toOptionDef(
+    BoardShape.DRAGONS,
     BoardShape.STANDARD,
     BoardShape.EXPANSION6,
     BoardShape.SEAFARERS1);

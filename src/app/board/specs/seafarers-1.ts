@@ -1,6 +1,6 @@
 import { BoardSpec, Hex, ResourceType } from '../board';
 import { BoardShape } from './shapes-enum';
-import { createByCounts, generatePorts, generateStandardShapedBoard, inCoords } from './spec-util';
+import { allowResourcesWithMainIslandRules, createByCounts, generatePorts, generateStandardShapedBoard, inCoords } from './spec-util';
 
 export const SEAFARERS1 = {
   shape: BoardShape.SEAFARERS1,
@@ -37,11 +37,9 @@ export const SEAFARERS1 = {
       7,  6,
     ]]
   ],
-  isResourceAllowed: (hex: Hex, resource: ResourceType) => {
-    if (resource !== ResourceType.GOLD && resource !== ResourceType.DESERT) {
-      return true;
-    }
-    const islandCoords = [
+  isResourceAllowed: allowResourcesWithMainIslandRules.bind(undefined,
+    // Coordinates of the smaller islands.
+    [
       3, 0,
       1, 2,
       2, 3,
@@ -50,14 +48,7 @@ export const SEAFARERS1 = {
       5, 6,
       9, 6,
       11, 6,
-    ];
-    const hexOnIsland = inCoords(hex, islandCoords);
-    if (resource === ResourceType.GOLD) {
-      return hexOnIsland;
-    } else { // desert
-      return !hexOnIsland;
-    }
-  },
+    ]),
   centerCoords: [{x: 9, y: 2}],
   beaches: () => [],
   ports: () => generatePorts([

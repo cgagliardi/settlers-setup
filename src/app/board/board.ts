@@ -120,6 +120,8 @@ export interface BoardSpec {
   readonly centerCoords: ReadonlyArray<Coordinate>;
   readonly beaches: () => Beach[];
   readonly ports: () => Port[];
+  // Corner coordinates where dragons lie.
+  readonly dragons?: CoordinatePairs;
 }
 
 /**
