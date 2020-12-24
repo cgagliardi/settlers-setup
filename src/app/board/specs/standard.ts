@@ -52,37 +52,13 @@ export const STANDARD = {
       corners: [{x: 1, y: 4}, {x: 1, y: 3}],
     }
   ],
-  beaches: () => [
-    {
-      connections: [6, 1],
-      from: {x: 2, y: 0},
-      to: {x: 7, y: 0},
-    },
-    {
-      connections: [1, 2],
-      from: {x: 7, y: 0},
-      to: {x: 10, y: 2},
-    },
-    {
-      connections: [2, 3],
-      from: {x: 10, y: 2},
-      to: {x: 8, y: 5}
-    },
-    {
-      connections: [3, 4],
-      from: {x: 8, y: 5},
-      to: {x: 3, y: 5},
-    },
-    {
-      connections: [4, 5],
-      from: {x: 3, y: 5},
-      to: {x: 0, y: 3},
-    },
-    {
-      connections: [5, 6],
-      from: {x: 0, y: 3},
-      to: {x: 2, y: 0},
-    }
+  beachConnections: [
+    { x: 7, y: 0, label: 1 },
+    { x: 10, y: 2, label: 2 },
+    { x: 8, y: 5, label: 3 },
+    { x: 3, y: 5, label: 4 },
+    { x: 0, y: 3, label: 5 },
+    { x: 2, y: 0, label: 6 },
   ],
   rollNumbers: () => [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12],
 } as BoardSpec;

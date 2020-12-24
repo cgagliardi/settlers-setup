@@ -56,10 +56,9 @@ export interface Port {
 export interface Beach {
   // The connection numbers that appear on the sides of the beach piece. In order from left-to-right
   // if down is the beach. The first number is the female connector.
-  connections: [number, number];
-  // from and to should be in clockwise order.
-  from: Coordinate;
-  to: Coordinate;
+  labels?: [number, number];
+  // coordinates are in clockwise order.
+  corners: Coordinate[];
 }
 
 /**
@@ -72,6 +71,12 @@ export function getNumDots(rollNumber: number): number {
   } else {
     return 13 - rollNumber;
   }
+}
+
+export interface BeachConnection {
+  x: number;
+  y: number;
+  label?: number;
 }
 
 /**
@@ -118,7 +123,7 @@ export interface BoardSpec {
   readonly requiredResources: ReadonlyArray<[ResourceType, CoordinatePairs]>;
   readonly isResourceAllowed: (hex: Hex, resource: ResourceType) => boolean;
   readonly centerCoords: ReadonlyArray<Coordinate>;
-  readonly beaches: () => Beach[];
+  readonly beachConnections: ReadonlyArray<BeachConnection>;
   readonly ports: () => Port[];
   // Corner coordinates where dragons lie.
   readonly dragons?: CoordinatePairs;
@@ -263,12 +268,12 @@ export class Board {
   // are what's documented in the Default Board Layout at the top of this file.
   readonly hexGrid: HexGrid;
   readonly cornerGrid: CornerGrid;
-  readonly beaches: ReadonlyArray<Beach>;
   readonly ports: ReadonlyArray<Port>;
   // Cached value for get hexes.
   private flatHexes: ReadonlyArray<Hex>;
   // Cached value fro get mutableHexes.
   private cachedMutableHexes: ReadonlyArray<Hex>;
+  private cachedBeaches: ReadonlyArray<Beach>;
   // Cached value for get corners.
   private flatCorners: ReadonlyArray<Corner>;
   // Coordinates are serialized using serializeCoordinate().
@@ -288,7 +293,6 @@ export class Board {
     }
     this.setRequiredResources();
 
-    this.beaches = spec.beaches() as ReadonlyArray<Beach>;
     this.ports = spec.ports() as ReadonlyArray<Port>;
     this.cornerGrid = this.generateCornerGrid();
   }
@@ -354,6 +358,42 @@ export class Board {
     return this.flatCorners;
   }
 
+  get beaches(): ReadonlyArray<Beach> {
+    if (!this.cachedBeaches) {
+      const connections = this.spec.beachConnections;
+      if (connections.length === 0) {
+        this.cachedBeaches = [];
+      } else {
+        const beaches = new Array<Beach>();
+        try {
+          beaches.push(
+              this.createBeachFromConnections(connections[connections.length - 1], connections[0]));
+        } catch (e) {
+          console.error(e);
+        }
+        for (let i = 0; i < connections.length - 1; i++) {
+          try {
+            beaches.push(this.createBeachFromConnections(connections[i], connections[i + 1]));
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        this.cachedBeaches = beaches;
+      }
+    }
+    return this.cachedBeaches;
+  }
+
+  createBeachFromConnections(from: BeachConnection, to: BeachConnection): Beach {
+    const beach = {
+      corners: this.calculateBeachCorners(from, to)
+    } as Beach;
+    if (from.label && to.label) {
+      beach.labels = [from.label, to.label];
+    }
+    return beach;
+  }
+
   getHex(x: number, y: number): Hex|undefined {
     return getFrom2dArray(this.hexGrid, x, y);
   }
@@ -393,17 +433,15 @@ export class Board {
    * This only works when start/end are along a straight line on the board.
    * Used to render the beaches of the board.
    */
-  getBeachCorners(from: Coordinate, to: Coordinate): Coordinate[] {
+  private calculateBeachCorners(from: Coordinate, to: Coordinate): Coordinate[] {
     // This works by determining the x and y direction between from and to. Then it walks along
     // the board incrementing towards that direction and seeing if any such increment is a beach
     // corner. Because incrementing only x or y or both could be the next correct beach, it tries
-    // all 3 combinations. The order of the combinations to try is based on xIsPrimary, which is
-    // just a measurement of which direction (x or y) is changing the most.
+    // all 3 combinations.
     // Appologies to those who have spent more time studying graph theory. This is just what I came
     // up with and it works for this limited problem set.
     const xDirection = to.x - from.x > 0 ? 1 : -1;
     const yDirection = to.y - from.y > 0 ? 1 : -1;
-    const xIsPrimary = Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
 
     const coords = [from];
 
@@ -418,13 +456,14 @@ export class Board {
 
     let prevCoord = from;
     while (prevCoord.x !== to.x || prevCoord.y !== to.y) {
-      if (xIsPrimary && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
+      const tryXFirst = prevCoord.x % 2 === 1;
+      if (tryXFirst && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
         continue;
       }
       if (tryBeachCorner({x: prevCoord.x, y: prevCoord.y + yDirection})) {
         continue;
       }
-      if (!xIsPrimary && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
+      if (!tryXFirst && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
         continue;
       }
       if (tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y + yDirection})) {

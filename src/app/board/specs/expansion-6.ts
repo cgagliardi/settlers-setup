@@ -57,37 +57,13 @@ export const EXPANSION6 = {
       corners: [{x: 1, y: 3}, {x: 1, y: 2}],
     },
   ],
-  beaches: () => [
-    {
-      connections: [6, 1],
-      from: {x: 3, y: 0},
-      to: {x: 8, y: 0},
-    },
-    {
-      connections: [1, 2],
-      from: {x: 8, y: 0},
-      to: {x: 12, y: 3},
-    },
-    {
-      connections: [2, 3],
-      from: {x: 12, y: 3},
-      to: {x: 9, y: 7},
-    },
-    {
-      connections: [3, 4],
-      from: {x: 9, y: 7},
-      to: {x: 4, y: 7},
-    },
-    {
-      connections: [4, 5],
-      from: {x: 4, y: 7},
-      to: {x: 0, y: 4},
-    },
-    {
-      connections: [5, 6],
-      from: {x: 0, y: 4},
-      to: {x: 3, y: 0},
-    },
+  beachConnections: [
+    { x: 8, y: 0, label: 1 },
+    { x: 12, y: 3, label: 2 },
+    { x: 9, y: 7, label: 3 },
+    { x: 4, y: 7, label: 4 },
+    { x: 0, y: 4, label: 5 },
+    { x: 3, y: 0, label: 6 },
   ],
   rollNumbers: () => createByCounts(
     [2, 2],

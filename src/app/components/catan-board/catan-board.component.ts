@@ -389,8 +389,7 @@ export class CatanBoardComponent implements OnChanges {
   private renderBeach(beach: Beach) {
     const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     // Start with the points along the board.
-    const beachCorners = this.board.getBeachCorners(beach.from, beach.to);
-    const beachPoints = beachCorners.map(c => this.getCornerPoint(c));
+    const beachPoints = beach.corners.map(c => this.getCornerPoint(c));
     const points = beachPoints.slice();
 
     const outerRight =
@@ -426,9 +425,11 @@ export class CatanBoardComponent implements OnChanges {
     path.strokeWidth = 1;
     path.closed = true;
 
-    this.renderBeachNumber(beach.connections[0], beachPoints[0], outerLeft, true);
-    this.renderBeachNumber(beach.connections[1], beachPoints[beachPoints.length - 1], outerRight,
+    if (beach.labels) {
+      this.renderBeachNumber(beach.labels[0], beachPoints[0], outerLeft, true);
+      this.renderBeachNumber(beach.labels[1], beachPoints[beachPoints.length - 1], outerRight,
         false);
+    }
   }
 
   private renderBeachNumber(value: number, beachPoint: paper.Point, outerPoint: paper.Point, first: boolean) {
