@@ -57,9 +57,9 @@ export interface Beach {
   // The connection numbers that appear on the sides of the beach piece. In order from left-to-right
   // if down is the beach. The first number is the female connector.
   connections: [number, number];
-  // Coordinates of every corner the beach touches where the first entry corresponds to
-  // connections[0] and vice-versa.
-  corners: Coordinate[];
+  // from and to should be in clockwise order.
+  from: Coordinate;
+  to: Coordinate;
 }
 
 /**
@@ -385,6 +385,65 @@ export class Board {
 
   isResourceImmutable(hex: Hex): boolean {
     return this.requiredResourceCoordinates.has(serializeCoordinate(hex.x, hex.y));
+  }
+
+  /**
+   * Given the start and end coordinates that are beach corners, returns a list of all beach
+   * coordinates from start to end inclusive.
+   * This only works when start/end are along a straight line on the board.
+   * Used to render the beaches of the board.
+   */
+  getBeachCorners(from: Coordinate, to: Coordinate): Coordinate[] {
+    // This works by determining the x and y direction between from and to. Then it walks along
+    // the board incrementing towards that direction and seeing if any such increment is a beach
+    // corner. Because incrementing only x or y or both could be the next correct beach, it tries
+    // all 3 combinations. The order of the combinations to try is based on xIsPrimary, which is
+    // just a measurement of which direction (x or y) is changing the most.
+    // Appologies to those who have spent more time studying graph theory. This is just what I came
+    // up with and it works for this limited problem set.
+    const xDirection = to.x - from.x > 0 ? 1 : -1;
+    const yDirection = to.y - from.y > 0 ? 1 : -1;
+    const xIsPrimary = Math.abs(to.x - from.x) > Math.abs(to.y - from.y);
+
+    const coords = [from];
+
+    const tryBeachCorner = (coord: Coordinate) => {
+      if (this.isBeachCorner(coord)) {
+        coords.push(coord);
+        prevCoord = coord;
+        return true;
+      }
+      return false;
+    };
+
+    let prevCoord = from;
+    while (prevCoord.x !== to.x || prevCoord.y !== to.y) {
+      if (xIsPrimary && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
+        continue;
+      }
+      if (tryBeachCorner({x: prevCoord.x, y: prevCoord.y + yDirection})) {
+        continue;
+      }
+      if (!xIsPrimary && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
+        continue;
+      }
+      if (tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y + yDirection})) {
+        continue;
+      }
+      throw new Error('Cannot find next coastal coordinate for beach.');
+    }
+    return coords;
+  }
+
+  /**
+   * @returns True if the corner at coord is at the edge of the board.
+   */
+  isBeachCorner(coord: Coordinate): boolean {
+    const corner = this.getCorner(coord.x, coord.y);
+    if (!corner) {
+      return false;
+    }
+    return corner.getHexes().length <= 2;
   }
 }
 

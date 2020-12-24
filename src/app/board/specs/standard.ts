@@ -55,71 +55,33 @@ export const STANDARD = {
   beaches: () => [
     {
       connections: [6, 1],
-      // TODO - If I can figure out how to walk around the perimeter of the board, I should be
-      // able to automate this list with just start and end points.
-      corners: [
-        {x: 2, y: 0},
-        {x: 3, y: 0},
-        {x: 4, y: 0},
-        {x: 5, y: 0},
-        {x: 6, y: 0},
-        {x: 7, y: 0},
-      ],
+      from: {x: 2, y: 0},
+      to: {x: 7, y: 0},
     },
     {
       connections: [1, 2],
-      corners: [
-        {x: 7, y: 0},
-        {x: 8, y: 0},
-        {x: 8, y: 1},
-        {x: 9, y: 1},
-        {x: 9, y: 2},
-        {x: 10, y: 2},
-      ],
+      from: {x: 7, y: 0},
+      to: {x: 10, y: 2},
     },
     {
       connections: [2, 3],
-      corners: [
-        {x: 10, y: 2},
-        {x: 10, y: 3},
-        {x: 9, y: 3},
-        {x: 9, y: 4},
-        {x: 8, y: 4},
-        {x: 8, y: 5}
-      ],
+      from: {x: 10, y: 2},
+      to: {x: 8, y: 5}
     },
     {
       connections: [3, 4],
-      corners: [
-        {x: 8, y: 5},
-        {x: 7, y: 5},
-        {x: 6, y: 5},
-        {x: 5, y: 5},
-        {x: 4, y: 5},
-        {x: 3, y: 5},
-      ],
+      from: {x: 8, y: 5},
+      to: {x: 3, y: 5},
     },
     {
       connections: [4, 5],
-      corners: [
-        {x: 3, y: 5},
-        {x: 2, y: 5},
-        {x: 2, y: 4},
-        {x: 1, y: 4},
-        {x: 1, y: 3},
-        {x: 0, y: 3},
-      ],
+      from: {x: 3, y: 5},
+      to: {x: 0, y: 3},
     },
     {
       connections: [5, 6],
-      corners: [
-        {x: 0, y: 3},
-        {x: 0, y: 2},
-        {x: 1, y: 2},
-        {x: 1, y: 1},
-        {x: 2, y: 1},
-        {x: 2, y: 0},
-      ],
+      from: {x: 0, y: 3},
+      to: {x: 2, y: 0},
     }
   ],
   rollNumbers: () => [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12],

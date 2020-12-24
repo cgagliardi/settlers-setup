@@ -389,7 +389,8 @@ export class CatanBoardComponent implements OnChanges {
   private renderBeach(beach: Beach) {
     const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     // Start with the points along the board.
-    const beachPoints = beach.corners.map(c => this.getCornerPoint(c));
+    const beachCorners = this.board.getBeachCorners(beach.from, beach.to);
+    const beachPoints = beachCorners.map(c => this.getCornerPoint(c));
     const points = beachPoints.slice();
 
     const outerRight =
