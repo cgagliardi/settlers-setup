@@ -3,21 +3,23 @@
  * define a Settlers board (BoardSpec). Additionaly, this file provides the Board class, which a
  * Strategy manipulates to fill a board and the UI reads to render the board.
  */
-import { BoardShape } from './board-specs';
+import { BoardShape } from './specs/shapes-enum';
 
 export enum ResourceType {
   ANY = 'Any', // Used for 3:1 ports.
   BRICK = 'Brick',
   DESERT = 'Desert',
+  GOLD = 'Gold',
   ORE = 'Ore',
   SHEEP = 'Sheep',
+  WATER = 'Water',
   WOOD = 'Wood',
   WHEAT = 'Wheat',
 }
 
 export const ROLL_NUMBERS = [2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as ReadonlyArray<number>;
 
-export const USABLE_RESOURCES = [
+export const STANDARD_RESOURCES = [
   ResourceType.BRICK,
   ResourceType.ORE,
   ResourceType.SHEEP,
@@ -27,6 +29,9 @@ export const USABLE_RESOURCES = [
 
 export type HexGrid = Array<Array<Hex|undefined>>;
 export type CornerGrid = Array<Array<Corner|undefined>>;
+// This is a more compact version of coordinate for use in board specs.
+// The arrays should always be even in length where values are [x0, y0, x1, y1, ...]
+export type CoordinatePairs = ReadonlyArray<number>;
 
 export interface Dimensions {
   readonly width: number;
@@ -36,6 +41,10 @@ export interface Dimensions {
 export interface Coordinate {
   readonly x: number;
   readonly y: number;
+}
+
+function serializeCoordinate(x: number, y: number): string {
+  return x + '-' + y;
 }
 
 export interface Port {
@@ -51,7 +60,6 @@ export interface Beach {
   // Coordinates of every corner the beach touches where the first entry corresponds to
   // connections[0] and vice-versa.
   corners: Coordinate[];
-  ports: Port[];
 }
 
 /**
@@ -105,7 +113,13 @@ export interface BoardSpec {
   // Returns a 2d array where populated columns alternate between each row as described by the board
   // layout examples in the top of this file.
   readonly hexes: (board: Board) => HexGrid;
+  // Initialize resources on hexes that must always be set. Resources set here should not be
+  // included in resources().
+  readonly requiredResources: ReadonlyArray<[ResourceType, CoordinatePairs]>;
+  readonly isResourceAllowed: (hex: Hex, resource: ResourceType) => boolean;
+  readonly centerCoords: ReadonlyArray<Coordinate>;
   readonly beaches: () => Beach[];
+  readonly ports: () => Port[];
 }
 
 /**
@@ -248,24 +262,37 @@ export class Board {
   readonly hexGrid: HexGrid;
   readonly cornerGrid: CornerGrid;
   readonly beaches: ReadonlyArray<Beach>;
+  readonly ports: ReadonlyArray<Port>;
   // Cached value for get hexes.
   private flatHexes: ReadonlyArray<Hex>;
+  // Cached value fro get mutableHexes.
+  private cachedMutableHexes: ReadonlyArray<Hex>;
   // Cached value for get corners.
   private flatCorners: ReadonlyArray<Corner>;
+  // Coordinates are serialized using serializeCoordinate().
+  private requiredResourceCoordinates: Set<string>;
 
   constructor(public readonly spec: BoardSpec) {
     this.shape = spec.shape;
     this.dimensions = spec.dimensions;
     this.hexGrid = spec.hexes(this);
 
+    this.requiredResourceCoordinates = new Set();
+    for (const [resourceType, coordinatePairs] of spec.requiredResources) {
+      for (let i = 0; i < coordinatePairs.length; i += 2) {
+        this.requiredResourceCoordinates.add(
+            serializeCoordinate(coordinatePairs[i], coordinatePairs[i + 1]));
+      }
+    }
+    this.setRequiredResources();
+
     this.beaches = spec.beaches() as ReadonlyArray<Beach>;
+    this.ports = spec.ports() as ReadonlyArray<Port>;
     this.cornerGrid = this.generateCornerGrid();
   }
 
   private generateCornerGrid(): CornerGrid {
     const corners = new Array<Array<Corner|undefined>>(this.hexGrid.length + 1);
-
-    const allPorts = this.beaches.reduce((arr, beach) => arr.concat(beach.ports), []);
 
     for (let y = 0; y < corners.length; y++) {
       const [row1, row2] = this.getHexRowsForCornerRow(y);
@@ -276,7 +303,7 @@ export class Board {
       corners[y] = new Array(rowLen);
       for (let x = firstCol; x < rowLen; x++) {
         const port =
-            allPorts.find(p => p.corners.find(c => c.x === x && c.y === y)) || null;
+            this.ports.find(p => p.corners.find(c => c.x === x && c.y === y)) || null;
         corners[y][x] = new Corner(x, y, port, this);
       }
     }
@@ -287,6 +314,17 @@ export class Board {
     for (const hex of this.hexes) {
       hex.reset();
     }
+    this.setRequiredResources();
+  }
+
+  private setRequiredResources(): void {
+    for (const [resourceType, coordinatePairs] of this.spec.requiredResources) {
+      for (let i = 0; i < coordinatePairs.length; i += 2) {
+        const x = coordinatePairs[i];
+        const y = coordinatePairs[i + 1];
+        this.getHex(x, y).resource = resourceType;
+      }
+    }
   }
 
   get hexes(): ReadonlyArray<Hex> {
@@ -296,19 +334,22 @@ export class Board {
     return this.flatHexes;
   }
 
+  get mutableHexes(): ReadonlyArray<Hex> {
+    if (!this.cachedMutableHexes) {
+      this.cachedMutableHexes = this.hexes.filter(hex => !this.isResourceImmutable(hex));
+    }
+    return this.cachedMutableHexes;
+  }
+
+  get centerHexes(): ReadonlyArray<Hex> {
+    return this.spec.centerCoords.map(coord => this.getHex(coord.x, coord.y));
+  }
+
   get corners(): ReadonlyArray<Corner> {
     if (!this.flatCorners) {
       this.flatCorners = flatten2dArray(this.cornerGrid) as ReadonlyArray<Corner>;
     }
     return this.flatCorners;
-  }
-
-  get ports(): ReadonlyArray<Port> {
-    const ports = [];
-    for (const beach of this.beaches) {
-      ports.push(...beach.ports);
-    }
-    return ports;
   }
 
   getHex(x: number, y: number): Hex|undefined {
@@ -331,6 +372,17 @@ export class Board {
     } else {
       return [this.hexGrid[r - 1], this.hexGrid[r]];
     }
+  }
+
+  /**
+   * @returns True if the hex is permitted to have the resource based on the type of game.
+   */
+  isResourceAllowed(hex: Hex, resource: ResourceType): boolean {
+    return this.spec.isResourceAllowed(hex, resource);
+  }
+
+  isResourceImmutable(hex: Hex): boolean {
+    return this.requiredResourceCoordinates.has(serializeCoordinate(hex.x, hex.y));
   }
 }
 

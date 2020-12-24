@@ -39,14 +39,10 @@ export type StrategyConstructor = new (options: StrategyOptions) => Strategy;
 
 export function shufflePorts(board: Board) {
   const resources = new RandomQueue<ResourceType>();
-  for (const beach of board.beaches) {
-    for (const port of beach.ports) {
-      resources.push(port.resource);
-    }
+  for (const port of board.ports) {
+    resources.push(port.resource);
   }
-  for (const beach of board.beaches) {
-    for (const port of beach.ports) {
-      port.resource = resources.pop();
-    }
+  for (const port of board.ports) {
+    port.resource = resources.pop();
   }
 }

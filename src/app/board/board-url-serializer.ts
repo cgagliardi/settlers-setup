@@ -2,9 +2,10 @@
  * @fileoverview Serializes and deserializes boards for use in a URL.
  */
 import { Board, ResourceType, Port, Hex } from './board';
-import { BoardShape, BOARD_SPECS } from './board-specs';
+import { BOARD_SPECS } from './board-specs';
 import { assert } from '../util/assert';
 import { FixedValuesSerializer } from '../util/fixed-values-serializer';
+import { BoardShape } from './specs/shapes-enum';
 
 const PORT_RESOURCES = [
   ResourceType.ANY,
@@ -22,8 +23,10 @@ const HEX_RESOURCES = [
   ResourceType.ORE,
   ResourceType.SHEEP,
   ResourceType.WHEAT,
-  ResourceType.WOOD
+  ResourceType.WOOD,
+  ResourceType.GOLD,
 ] as ResourceType[];
+// TODO: Dynamically create this based on the size of the board.
 const hexResourceSerializer = new FixedValuesSerializer(HEX_RESOURCES);
 
 const ROLL_NUMS = [null, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as number[];
@@ -34,13 +37,13 @@ const rollNumSerializer = new FixedValuesSerializer(ROLL_NUMS);
  * 0s
  * 012345678901234567890
  * 0: The version of the serializer
- * 1: The shape of the board (S or 6)
+ * 1: The shape of the board
  *
  */
 export function serialize(board: Board): string {
   const shape = serializeShape(board.shape);
-  const hexResources = hexResourceSerializer.serialize(board.hexes.map(h => h.resource));
-  const rollNums = rollNumSerializer.serialize(board.hexes.map(h => h.rollNumber));
+  const hexResources = hexResourceSerializer.serialize(board.mutableHexes.map(h => h.resource));
+  const rollNums = rollNumSerializer.serialize(board.mutableHexes.map(h => h.rollNumber));
 
   let serialized = shape + hexResources + '-' + rollNums;
 
@@ -53,22 +56,11 @@ export function serialize(board: Board): string {
 }
 
 function hasDefaultPorts(board: Board) {
-  const defaultBeaches = board.spec.beaches();
-  for (let i = 0; i < board.beaches.length; i++) {
-    const boardBeach = board.beaches[i];
-    const defaultBeach = defaultBeaches[i];
-    if (!boardBeach.ports.every((port, j) => port.resource === defaultBeach.ports[j].resource)) {
-      return false;
-    }
-  }
-  return true;
+  const defaultPorts = board.spec.ports();
+  return board.ports.every((port, i) => port.resource === defaultPorts[i].resource);
 }
 
 export function deserialize(val: string): Board {
-  const version = val[0];
-  assert(version === '1' || version === '2', 'Unsupported serialization version ' + val);
-
-  // The version number also represents the board shape (hence 2 supported values).
   const shape = deserializeShape(val[0]);
   const boardSpec = BOARD_SPECS[shape];
   const board = new Board(boardSpec);
@@ -87,9 +79,9 @@ export function deserialize(val: string): Board {
     }
   }
 
-  deserializeEntities(hexResourceVal, hexResourceSerializer, hexResources, board.hexes,
+  deserializeEntities(hexResourceVal, hexResourceSerializer, hexResources, board.mutableHexes,
       (hex, resource) => hex.resource = resource);
-  deserializeEntities(rollNumVal, rollNumSerializer, rollNums, board.hexes,
+  deserializeEntities(rollNumVal, rollNumSerializer, rollNums, board.mutableHexes,
       (hex, num) => hex.rollNumber = num);
 
   // The last section of the URL is the placement of the ports. This is only set when it is not
@@ -97,9 +89,7 @@ export function deserialize(val: string): Board {
   if (parts.length > 2) {
     const portsVal = parts[2];
 
-    const portResources = boardSpec.beaches().reduce((ports, beach) => {
-      return ports.concat(beach.ports.map(p => p.resource));
-    }, [] as Array<ResourceType>);
+    const portResources = boardSpec.ports().map(p => p.resource) as Array<ResourceType>;
 
     deserializeEntities(portsVal, portResourceSerializer, portResources, board.ports,
       (port, resource) => port.resource = resource);
@@ -121,6 +111,8 @@ function serializeShape(shape: BoardShape): string {
       return '1';
     case BoardShape.EXPANSION6:
       return '2';
+    case BoardShape.SEAFARERS1:
+      return '3';
   }
   throw new Error('Unsupported shape ' + shape);
 }
@@ -131,6 +123,8 @@ function deserializeShape(val: string): BoardShape {
       return BoardShape.STANDARD;
     case '2':
       return BoardShape.EXPANSION6;
+    case '3':
+      return BoardShape.SEAFARERS1;
   }
   throw new Error('Unsupported shape ' + val);
 }

@@ -115,6 +115,10 @@ export class RandomQueue<T> {
     return this.vals[this.nextForPop];
   }
 
+  includes(v: T): boolean {
+    return this.vals.includes(v);
+  }
+
   private removeAtIndex(i: number): T|undefined {
     const val = this.vals[i];
     this.vals.splice(i, 1);

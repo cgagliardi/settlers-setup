@@ -67,25 +67,7 @@ function weightedAverage(p1: paper.Point, p2: paper.Point, weight: number): pape
   return p1.add(vector.multiply(weight));
 }
 
-function getColor(resource: ResourceType): string {
-  // Material design colors.
-  // See https://material.io/design/color/the-color-system.html
-  switch (resource) {
-    case ResourceType.BRICK:
-      return '#C62828';
-    case ResourceType.DESERT:
-      return '#795548';
-    case ResourceType.ORE:
-      return '#B0BEC5';
-    case ResourceType.SHEEP:
-      return '#B2FF59';
-    case ResourceType.WHEAT:
-      return '#FFEE58';
-    case ResourceType.WOOD:
-      return '#33691E';
-  }
-  return 'black';
-}
+const WATER_COLORS = ['#4a85d3', '#64B5F6'];
 
 function getGradientColors(resource: ResourceType): string[] {
   switch (resource) {
@@ -93,10 +75,14 @@ function getGradientColors(resource: ResourceType): string[] {
       return ['#E53935', '#C62828', '#B71C1C'];
     case ResourceType.DESERT:
       return ['#8F6455', '#795548', '#5D4037'];
+    case ResourceType.GOLD:
+        return ['orange', 'yellow'];
     case ResourceType.ORE:
       return ['#CFD8DC', '#B0BEC5', '#90A4AE'];
     case ResourceType.SHEEP:
       return ['#BCFF6B', '#B2FF59', '#9EE34F'];
+    case ResourceType.WATER:
+        return WATER_COLORS;
     case ResourceType.WHEAT:
       return ['#FFF176', '#FFEE58', '#FFEB3B'];
     case ResourceType.WOOD:
@@ -219,14 +205,22 @@ export class CatanBoardComponent implements OnChanges {
     }
     this.project = new paper.Project(canvasEl);
 
+    for (const hex of this.board.hexes) {
+      if (this.board.isResourceImmutable(hex)) {
+        this.renderHex(hex);
+      }
+    }
     for (const beach of this.board.beaches) {
       this.renderBeach(beach);
+    }
+    for (const port of this.board.ports) {
+      this.renderPort(port);
     }
 
     // The hexes & rollNumbers are rendered in a random order so that they can be animated in
     // randomly.
     let placementOrder = [];
-    for (let i = 0; i < this.board.hexes.length; i++) {
+    for (let i = 0; i < this.board.mutableHexes.length; i++) {
       placementOrder.push(i);
     }
     placementOrder = shuffle(placementOrder);
@@ -235,7 +229,7 @@ export class CatanBoardComponent implements OnChanges {
     this.rollNumItems = [];
     this.finalHexYs = [];
     for (const i of placementOrder) {
-      const hex = this.board.hexes[i];
+      const hex = this.board.mutableHexes[i];
       const [item, rollNumber] = this.renderHex(hex);
       this.hexItems.push(item);
       this.rollNumItems.push(rollNumber);
@@ -421,7 +415,7 @@ export class CatanBoardComponent implements OnChanges {
       const vector = lastBeachPoint.subtract(outerPoint);
       vector.length += (HEX_SIDE_HEIGHT * 0.4 * scale);
       const innerPoint = outerPoint.add(vector);
-      path.fillColor = new paper.Color(createGradient(['#4a85d3', '#64B5F6']), outerPoint, innerPoint);
+      path.fillColor = new paper.Color(createGradient(WATER_COLORS), outerPoint, innerPoint);
     }
     path.strokeColor = new paper.Color('black');
     path.strokeWidth = 1;
@@ -430,8 +424,6 @@ export class CatanBoardComponent implements OnChanges {
     this.renderBeachNumber(beach.connections[0], beachPoints[0], outerLeft, true);
     this.renderBeachNumber(beach.connections[1], beachPoints[beachPoints.length - 1], outerRight,
         false);
-
-    beach.ports.forEach(this.renderPort.bind(this));
   }
 
   private renderBeachNumber(value: number, beachPoint: paper.Point, outerPoint: paper.Point, first: boolean) {

@@ -1,8 +1,9 @@
 import { serialize, deserialize } from './board-url-serializer';
 import { Board, ResourceType, ROLL_NUMBERS, BoardSpec } from './board';
-import { BOARD_SPECS, BoardShape } from './board-specs';
+import { BOARD_SPECS } from './board-specs';
 
 import flatten from 'lodash/flatten';
+import { BoardShape } from './specs/shapes-enum';
 
 describe('board-url-serializer', () => {
   let standardBoard: Board;
@@ -107,15 +108,12 @@ describe('board-url-serializer', () => {
       return board;
     }
 
-    const beaches = spec.beaches();
-    const portResources = flatten(beaches.map(b => b.ports)).map(p => p.resource);
+    const portResources = spec.ports().map(p => p.resource);
     portResources.sort();
     let i = 0;
-    for (const beach of board.beaches) {
-      for (const port of beach.ports) {
-        port.resource = portResources[i];
-        i++;
-      }
+    for (const port of board.ports) {
+      port.resource = portResources[i];
+      i++;
     }
 
     return board;

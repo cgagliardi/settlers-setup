@@ -74,3 +74,13 @@ export function findAllHighestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => 
   }
   return highestVals;
 }
+
+export function countMatches<T>(collection: ReadonlyArray<T>, fn: (v: T) => boolean): number {
+  let i = 0;
+  for (const val of collection) {
+    if (fn(val)) {
+      i++;
+    }
+  }
+  return i;
+}

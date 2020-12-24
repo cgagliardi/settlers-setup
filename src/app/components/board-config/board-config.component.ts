@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Output, Input, OnChanges } from '@angular/core';
 import { BoardSpec } from '../../board/board';
-import { BoardShape, BOARD_SPECS } from '../../board/board-specs';
+import { BOARD_SPECS } from '../../board/board-specs';
 import { BalancedStrategy } from '../../board/strategy/balanced-strategy';
 import { Strategy, DesertPlacement, ResourceDistribution } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 import { CONFIG_SLIDER_MAX_VALUE } from '../config-slider/config-slider.component';
+import { BoardShape } from 'src/app/board/specs/shapes-enum';
 
 export interface FormState {
   boardShape: BoardShape;
@@ -47,7 +48,8 @@ function toOptionDef(...values: Array<string|[string, string]>): OptionDef[] {
 export class BoardConfigComponent implements OnChanges {
   boardShapes = toOptionDef(
     BoardShape.STANDARD,
-    BoardShape.EXPANSION6);
+    BoardShape.EXPANSION6,
+    BoardShape.SEAFARERS1);
 
   desertPlacements = toOptionDef(
     DesertPlacement.RANDOM,
