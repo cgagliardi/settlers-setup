@@ -12,7 +12,6 @@ export interface FormState {
   boardShape: BoardShape;
   desertPlacement: DesertPlacement;
   resourceDistribution: number;
-  numberDistribution: number;
   shufflePorts: boolean;
   allowResourceOnPort: boolean;
 }
@@ -63,7 +62,6 @@ export class BoardConfigComponent implements OnChanges {
     boardShape: [this.boardShapes[0].value],
     desertPlacement: [this.desertPlacements[0].value],
     resourceDistribution: CONFIG_SLIDER_MAX_VALUE,
-    numberDistribution: CONFIG_SLIDER_MAX_VALUE,
     shufflePorts: false,
     allowResourceOnPort: false,
   });
@@ -92,7 +90,6 @@ export class BoardConfigComponent implements OnChanges {
         new BalancedStrategy({
           desertPlacement: state.desertPlacement,
           resourceDistribution: state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE,
-          numberDistribution: state.numberDistribution / CONFIG_SLIDER_MAX_VALUE,
           shufflePorts: state.shufflePorts,
           allowResourceOnPort: state.allowResourceOnPort,
         });

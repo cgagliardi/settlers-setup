@@ -2,9 +2,8 @@ import { Board, BoardSpec, ResourceType, Hex, getNumDots, STANDARD_RESOURCES, Co
 import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution, shufflePorts } from './strategy';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
-import { findAllLowestBy, hasAll, sumByKey, findHighestBy, findAllHighestBy, countMatches } from 'src/app/util/collections';
+import { findAllLowestBy, hasAll, sumByKey, findHighestBy, countMatches } from 'src/app/util/collections';
 
-import countBy from 'lodash/countBy';
 import mean from 'lodash/mean';
 import pull from 'lodash/pull';
 import round from 'lodash/round';
@@ -29,15 +28,7 @@ const FIRST_MIN_TIME = 400;
 // numbers to see which produced the optimal score.
 const HEX_CORNER_POWER = 6;
 
-const LOW_SCORE = 3.7;
-const HIGH_SCORE = 21;
-
 let firstGenerated = false;
-
-enum NumberPlacement {
-  COMMUNISM = 0,
-  CAPITALISM = 1,
-}
 
 function createRandomQueueByPercent<T>(
       percent: number, size: number, lowValue: T, highValue: T): RandomQueue<T> {
@@ -63,18 +54,8 @@ export class BalancedStrategy implements Strategy {
   private remainingResources: RandomQueue<ResourceType>;
   private board: Board;
   private initialResources: RandomQueue<ResourceType>;
-  private targetScore: number;
 
-  constructor(readonly options: StrategyOptions) {
-    // options.numberDistribution is given as a number between 0 and 1, where
-    // 1 = very evenly distrubited (communism)
-    // 0 = very uneven (capitalism)
-    // Below we convert the point on that line to an equivalent score.
-    // LOW_SCORE ~= communism, HIGH_SCORE ~= capitalism
-    this.targetScore =
-        (1 - options.numberDistribution) * (HIGH_SCORE - LOW_SCORE) + LOW_SCORE;
-    console.log('target score: ' + this.targetScore);
-  }
+  constructor(readonly options: StrategyOptions) {}
 
   generateBoard(spec: BoardSpec): Board {
     // Because we randomly generate N boards and pick the best one, the scoring can bias towards a
@@ -110,9 +91,7 @@ export class BalancedStrategy implements Strategy {
     if (previous === null) {
       return true;
     }
-    const previousDistance = Math.abs(previous - this.targetScore);
-    const nextDistance = Math.abs(next - this.targetScore);
-    return nextDistance < previousDistance;
+    return next < previous;
   }
 
   /**
@@ -159,25 +138,22 @@ export class BalancedStrategy implements Strategy {
     // Start by placing the best available numbers on at least one of each resource type.
     // This is just to make sure there's at least 1 good number per resource.
 
-    // When generating a "communism" board, good numbers tend to naturally end up on the beach.
+    // Good numbers tend to naturally end up on the beach.
     // Ensure there's at least 1 good inland number.
     const inlandHex = sample(this.remainingHexes.filter(h => !isCoastal(h)));
     inlandHex.rollNumber = this.remainingNumbers.pop();
     this.initialResources.remove(inlandHex.resource);
     pull(this.remainingHexes, inlandHex);
 
-    const numberStrategies = createRandomQueueByPercent(
-        this.options.numberDistribution, this.remainingHexes.length,
-        NumberPlacement.CAPITALISM, NumberPlacement.COMMUNISM);
     let resource;
     // tslint:disable-next-line:no-conditional-assignment
     while (resource = this.initialResources.pop()) {
-      this.placeNumber(numberStrategies.pop(), resource);
+      this.placeNumber(resource);
     }
 
     // Place the remaining roll numbers until there are none left.
     while (this.remainingHexes.length) {
-      this.placeNumber(numberStrategies.pop());
+      this.placeNumber();
     }
 
     return board;
@@ -339,7 +315,7 @@ export class BalancedStrategy implements Strategy {
    * Scores every corner and every hex of the board, then places the highest available number of the
    * lowest valued hex.
    */
-  private placeNumber(numberStrategy: NumberPlacement, resourceType: null|ResourceType = null) {
+  private placeNumber(resourceType: null|ResourceType = null) {
     this.scoreHexesAndCorners();
 
     let potentialHexes = this.remainingHexes;
@@ -347,11 +323,7 @@ export class BalancedStrategy implements Strategy {
       potentialHexes = potentialHexes.filter(h => h.resource === resourceType);
     }
 
-    if (numberStrategy === NumberPlacement.COMMUNISM) {
-      potentialHexes = findAllLowestBy(potentialHexes, h => h.score);
-    } else {
-      potentialHexes = findAllHighestBy(potentialHexes, h => h.score);
-    }
+    potentialHexes = findAllLowestBy(potentialHexes, h => h.score);
     const hex = sample(potentialHexes);
     pull(this.remainingHexes, hex);
 
