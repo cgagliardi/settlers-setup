@@ -1,11 +1,12 @@
 /**
  * @fileoverview Serializes and deserializes boards for use in a URL.
  */
-import { Board, ResourceType, Port, Hex } from './board';
+import { Board, ResourceType, Port, Hex, BoardSpec } from './board';
 import { BOARD_SPECS } from './board-specs';
 import { assert } from '../util/assert';
 import { FixedValuesSerializer } from '../util/fixed-values-serializer';
 import { BoardShape } from './specs/shapes-enum';
+import uniq from 'lodash/uniq';
 
 const PORT_RESOURCES = [
   ResourceType.ANY,
@@ -26,26 +27,30 @@ const HEX_RESOURCES = [
   ResourceType.WOOD,
   ResourceType.GOLD,
 ] as ResourceType[];
-// TODO: Dynamically create this based on the size of the board.
-const hexResourceSerializer = new FixedValuesSerializer(HEX_RESOURCES);
 
 const ROLL_NUMS = [null, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as number[];
 const rollNumSerializer = new FixedValuesSerializer(ROLL_NUMS);
 
+const SHAPE_URL_KEYS = {
+  [BoardShape.STANDARD]: 's',
+  [BoardShape.EXPANSION6]: 'e',
+  [BoardShape.SEAFARERS1]: '1',
+  [BoardShape.DRAGONS]: 'd',
+} as {[key in BoardShape]: string};
+
 /**
- * The board is serialized in the following format
- * 0s
- * 012345678901234567890
- * 0: The version of the serializer
- * 1: The shape of the board
- *
+ * The board is serialized as
+ * 3[Board Shape][Hex Resources]-[Roll Numbers]-[Port Resources]
+ * Where [Board Shape] is always a single character and the final "-[Port Resources]" is optional.
  */
 export function serialize(board: Board): string {
   const shape = serializeShape(board.shape);
+
+  const hexResourceSerializer = createHexResourceSerializer(board.spec);
   const hexResources = hexResourceSerializer.serialize(board.mutableHexes.map(h => h.resource));
   const rollNums = rollNumSerializer.serialize(board.mutableHexes.map(h => h.rollNumber));
 
-  let serialized = shape + hexResources + '-' + rollNums;
+  let serialized = '3' + shape + hexResources + '-' + rollNums;
 
   if (!hasDefaultPorts(board)) {
     const portResources = portResourceSerializer.serialize(board.ports.map(p => p.resource));
@@ -61,11 +66,14 @@ function hasDefaultPorts(board: Board) {
 }
 
 export function deserialize(val: string): Board {
-  const shape = deserializeShape(val[0]);
+  const version = val[0];
+  // Older versions are not supported and will throw an error.
+  assert(version === '3');
+  const shape = deserializeShape(val[1]);
   const boardSpec = BOARD_SPECS[shape];
   const board = new Board(boardSpec);
 
-  const parts = val.substr(1).split('-');
+  const parts = val.substr(2).split('-');
   const hexResourceVal = parts[0];
   const rollNumVal = parts[1];
 
@@ -79,6 +87,7 @@ export function deserialize(val: string): Board {
     }
   }
 
+  const hexResourceSerializer = createHexResourceSerializer(boardSpec);
   deserializeEntities(hexResourceVal, hexResourceSerializer, hexResources, board.mutableHexes,
       (hex, resource) => hex.resource = resource);
   deserializeEntities(rollNumVal, rollNumSerializer, rollNums, board.mutableHexes,
@@ -98,6 +107,10 @@ export function deserialize(val: string): Board {
   return board;
 }
 
+function createHexResourceSerializer(spec: BoardSpec): FixedValuesSerializer<ResourceType> {
+  return new FixedValuesSerializer(uniq(spec.resources()).sort() as ResourceType[]);
+}
+
 /**
  * Returns true if there are custom ports specified in the URL.
  */
@@ -106,29 +119,18 @@ export function hasCustomPorts(val: string) {
 }
 
 function serializeShape(shape: BoardShape): string {
-  switch (shape) {
-    case BoardShape.STANDARD:
-      return '1';
-    case BoardShape.EXPANSION6:
-      return '2';
-    case BoardShape.SEAFARERS1:
-      return '3';
-    case BoardShape.DRAGONS:
-      return 'd';
+  const key = SHAPE_URL_KEYS[shape];
+  if (!key) {
+    throw new Error('Unsupported shape ' + shape);
   }
-  throw new Error('Unsupported shape ' + shape);
+  return key;
 }
 
 function deserializeShape(val: string): BoardShape {
-  switch (val) {
-    case '1':
-      return BoardShape.STANDARD;
-    case '2':
-      return BoardShape.EXPANSION6;
-    case '3':
-      return BoardShape.SEAFARERS1;
-    case 'd':
-      return BoardShape.DRAGONS;
+  for (const shape in SHAPE_URL_KEYS) {
+    if (SHAPE_URL_KEYS[shape] === val) {
+      return shape as BoardShape;
+    }
   }
   throw new Error('Unsupported shape ' + val);
 }
