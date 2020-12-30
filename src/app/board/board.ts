@@ -441,7 +441,7 @@ export class Board {
     // Appologies to those who have spent more time studying graph theory. This is just what I came
     // up with and it works for this limited problem set.
     const xDirection = to.x - from.x > 0 ? 1 : -1;
-    const yDirection = to.y - from.y > 0 ? 1 : -1;
+    const yDirection = from.y === to.y ? 0 : (to.y - from.y > 0 ? 1 : -1);
 
     const coords = [from];
 
@@ -456,18 +456,20 @@ export class Board {
 
     let prevCoord = from;
     while (prevCoord.x !== to.x || prevCoord.y !== to.y) {
-      const tryXFirst = prevCoord.x % 2 === 1;
+      const tryXFirst = yDirection === 0 || prevCoord.x % 2 === 1;
       if (tryXFirst && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
         continue;
       }
-      if (tryBeachCorner({x: prevCoord.x, y: prevCoord.y + yDirection})) {
-        continue;
-      }
-      if (!tryXFirst && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
-        continue;
-      }
-      if (tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y + yDirection})) {
-        continue;
+      if (yDirection !== 0) {
+        if (tryBeachCorner({x: prevCoord.x, y: prevCoord.y + yDirection})) {
+          continue;
+        }
+        if (!tryXFirst && tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y})) {
+          continue;
+        }
+        if (tryBeachCorner({x: prevCoord.x + xDirection, y: prevCoord.y + yDirection})) {
+          continue;
+        }
       }
       throw new Error('Cannot find next coastal coordinate for beach.');
     }
