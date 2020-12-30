@@ -2,7 +2,7 @@ import { Component, EventEmitter, Output, Input, OnChanges } from '@angular/core
 import { BoardSpec } from '../../board/board';
 import { BOARD_SPECS } from '../../board/board-specs';
 import { BalancedStrategy } from '../../board/strategy/balanced-strategy';
-import { Strategy, DesertPlacement, ResourceDistribution } from '../../board/strategy/strategy';
+import { Strategy, DesertPlacement } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 import { CONFIG_SLIDER_MAX_VALUE } from '../config-slider/config-slider.component';
 import { BoardShape } from 'src/app/board/specs/shapes-enum';
