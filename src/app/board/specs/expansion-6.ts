@@ -57,6 +57,7 @@ export const EXPANSION6 = {
       corners: [{x: 1, y: 3}, {x: 1, y: 2}],
     },
   ],
+  hasDefaultPortResources: true,
   beachConnections: [
     { x: 8, y: 0, label: 1 },
     { x: 12, y: 3, label: 2 },

@@ -125,6 +125,9 @@ export interface BoardSpec {
   readonly centerCoords: ReadonlyArray<Coordinate>;
   readonly beachConnections: ReadonlyArray<BeachConnection>;
   readonly ports: () => Port[];
+  // When true the resources at the ports are the defaults. If this is false, the resources on ports
+  // should always be shuffled as there is no default.
+  readonly hasDefaultPortResources: boolean;
   // Corner coordinates where dragons lie.
   readonly dragons?: CoordinatePairs;
 }

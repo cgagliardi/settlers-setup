@@ -52,6 +52,7 @@ export const STANDARD = {
       corners: [{x: 1, y: 4}, {x: 1, y: 3}],
     }
   ],
+  hasDefaultPortResources: true,
   beachConnections: [
     { x: 7, y: 0, label: 1 },
     { x: 10, y: 2, label: 2 },

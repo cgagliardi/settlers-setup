@@ -66,6 +66,8 @@ export class BoardConfigComponent implements OnChanges {
 
   desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
 
+  hasDefaultPorts = true;
+
   configForm = this.fb.group({
     boardShape: [this.boardShapes[0].value],
     desertPlacement: [this.desertPlacements[0].value],
@@ -79,9 +81,11 @@ export class BoardConfigComponent implements OnChanges {
 
   constructor(private fb: FormBuilder) {
     this.configForm.get('boardShape').valueChanges.subscribe((boardShape: BoardShape) => {
+      const spec = BOARD_SPECS[boardShape];
+      // Toggle desert options based on board shape.
       const desertPlacement = this.configForm.get('desertPlacement');
       const desertValue = desertPlacement.value;
-      if (this.boardShapeHasCenter(boardShape)) {
+      if (spec.centerCoords.length > 0) {
         this.desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
         if (desertValue === DesertPlacement.INLAND) {
         desertPlacement.setValue(DesertPlacement.CENTER);
@@ -93,6 +97,9 @@ export class BoardConfigComponent implements OnChanges {
           desertPlacement.setValue(DesertPlacement.INLAND);
         }
       }
+
+      // Toggle shufflePorts based on board shape.
+      this.hasDefaultPorts = spec.hasDefaultPortResources;
     });
   }
 
@@ -101,12 +108,6 @@ export class BoardConfigComponent implements OnChanges {
       this.configForm.patchValue(this.formState);
     }
   }
-
-  private boardShapeHasCenter(boardShape: BoardShape): boolean {
-    const spec = BOARD_SPECS[boardShape];
-    return spec.centerCoords.length > 0;
-  }
-
   /**
    * @return the current state of the form.
    */
@@ -120,7 +121,7 @@ export class BoardConfigComponent implements OnChanges {
         new BalancedStrategy({
           desertPlacement: state.desertPlacement,
           resourceDistribution: state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE,
-          shufflePorts: state.shufflePorts,
+          shufflePorts: this.hasDefaultPorts ? state.shufflePorts : true,
           allowResourceOnPort: state.allowResourceOnPort,
         });
     return {

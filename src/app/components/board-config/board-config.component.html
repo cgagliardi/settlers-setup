@@ -13,7 +13,7 @@
                      maxLabel="Even"
                      formControlName="resourceDistribution"></app-config-slider>
 
-  <div class="checkbox">
+  <div class="checkbox" [style.display]="hasDefaultPorts ? 'block' : 'none'">
     <mat-checkbox formControlName="shufflePorts">Shuffle ports</mat-checkbox>
   </div>
   <div class="checkbox">

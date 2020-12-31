@@ -109,6 +109,7 @@ export const DRAGONS = {
     4, 6,
     5, 6,
   ]),
+  hasDefaultPortResources: false,
   rollNumbers: () => [
     12, 3, 8, 9, 4, 6, 5, 4, 10, 11, 9, 6, 11, 10, 5, 3, 8, 11, 8, 3, 4, 9, 5,
     3, 10, 10, 5, 2, 6
