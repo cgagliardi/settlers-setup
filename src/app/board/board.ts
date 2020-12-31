@@ -53,12 +53,19 @@ export interface Port {
   readonly corners: [Coordinate, Coordinate];
 }
 
+/**
+ * A "beach" represents the border of the catan board. They have no functional point in the game,
+ * but they orient the user as to how the board is layed out.
+ */
 export interface Beach {
   // The connection numbers that appear on the sides of the beach piece. In order from left-to-right
   // if down is the beach. The first number is the female connector.
   labels?: [number, number];
   // coordinates are in clockwise order.
   corners: Coordinate[];
+  // Is this beach piece the special, odd shaped one that comes with Seafarers and has a legend
+  // for the cost of a ship on it.
+  isSeafarersBeach: boolean;
 }
 
 /**
@@ -388,8 +395,10 @@ export class Board {
   }
 
   createBeachFromConnections(from: BeachConnection, to: BeachConnection): Beach {
+    const isSeafarersBeach = from.x === to.x && Math.abs(from.y - to.y) === 2;
     const beach = {
-      corners: this.calculateBeachCorners(from, to)
+      corners: this.calculateBeachCorners(from, to, isSeafarersBeach),
+      isSeafarersBeach,
     } as Beach;
     if (from.label && to.label) {
       beach.labels = [from.label, to.label];
@@ -436,7 +445,11 @@ export class Board {
    * This only works when start/end are along a straight line on the board.
    * Used to render the beaches of the board.
    */
-  private calculateBeachCorners(from: Coordinate, to: Coordinate): Coordinate[] {
+  private calculateBeachCorners(from: Coordinate, to: Coordinate, isSeafarersBeach: boolean): Coordinate[] {
+    if (isSeafarersBeach) {
+      return this.generateSeafarersBeachCorners(from, to);
+    }
+
     // This works by determining the x and y direction between from and to. Then it walks along
     // the board incrementing towards that direction and seeing if any such increment is a beach
     // corner. Because incrementing only x or y or both could be the next correct beach, it tries
@@ -477,6 +490,23 @@ export class Board {
       throw new Error('Cannot find next coastal coordinate for beach.');
     }
     return coords;
+  }
+
+  /**
+   * Generates the corners for the oddly shaped beach that comes with Seafarers. The shape is so
+   * different than the other pieces, that the approach used above doesn't work and it's best just
+   * to hard-code it.
+   */
+  private generateSeafarersBeachCorners(from: Coordinate, to: Coordinate): Coordinate[] {
+    const yDir = from.y > to.y ? -1 : 1;
+    const xDir = yDir === 1 ? -1 : 1;
+    return [
+      from,
+      { x: from.x + xDir, y: from.y },
+      { x: from.x + xDir, y: from.y + yDir },
+      { x: from.x, y: from.y + yDir },
+      to,
+    ];
   }
 
   /**

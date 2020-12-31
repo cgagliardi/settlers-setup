@@ -58,7 +58,7 @@ export const SEAFARERS1 = {
     { x: 11, y: 7 },
     { x: 7, y: 7 },
     { x: 2, y: 7 },
-    { x: 0, y: 5 },
+    { x: 0, y: 4 },
   ],
   ports: () => generatePorts([
       11, 0,

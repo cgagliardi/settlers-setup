@@ -37,7 +37,7 @@ const HEX_DIMS = {
   width: HEX_SIDE_HEIGHT * Math.sin(RAD_60_DEG) * 2,
   height: HEX_CORNER_HEIGHT * 2 + HEX_SIDE_HEIGHT
 };
-const BOARD_OFFSET = { x: BEACH_DISTANCE * 1.5 + 5, y: BEACH_DISTANCE + 5 };
+const BOARD_OFFSET = { x: BEACH_DISTANCE * 1.5 + 6, y: BEACH_DISTANCE + 5 };
 
 function toPoints(arr: number[]): paper.Point[] {
   assert(arr.length % 2 === 0);
@@ -210,9 +210,15 @@ export class CatanBoardComponent implements OnChanges {
         this.renderHex(hex);
       }
     }
+    let prevPoints: paper.Point[];
     for (const beach of this.board.beaches) {
       try {
-        this.renderBeach(beach);
+        if (beach.isSeafarersBeach) {
+          assert(prevPoints);
+          this.renderSeafarersBeach(beach, prevPoints);
+        } else {
+          prevPoints = this.renderBeach(beach);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -390,11 +396,11 @@ export class CatanBoardComponent implements OnChanges {
     return group;
   }
 
-  private renderBeach(beach: Beach) {
+  private renderBeach(beach: Beach): paper.Point[] {
     const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     // Start with the points along the board.
-    const beachPoints = beach.corners.map(c => this.getCornerPoint(c));
-    const points = beachPoints.slice();
+    const innerPoints = beach.corners.map(c => this.getCornerPoint(c));
+    const points = innerPoints.slice();
 
     const outerRight =
         getPointFromLine(points[points.length - 1], points[points.length - 2], -60,
@@ -415,25 +421,15 @@ export class CatanBoardComponent implements OnChanges {
 
     points.push(outerRight, outerMiddle, outerLeft);
 
-    const path = new paper.Path(points);
-    {
-      // Beach gradient
-      const outerPoint = outerRight;
-      const lastBeachPoint = beachPoints[beachPoints.length - 1];
-      const vector = lastBeachPoint.subtract(outerPoint);
-      vector.length += (HEX_SIDE_HEIGHT * 0.4 * scale);
-      const innerPoint = outerPoint.add(vector);
-      path.fillColor = new paper.Color(createGradient(WATER_COLORS), outerPoint, innerPoint);
-    }
-    path.strokeColor = new paper.Color('black');
-    path.strokeWidth = 1;
-    path.closed = true;
+    const gradientEnd = weightedAverage(outerLeft, innerPoints[0], 1.4);
+    this.renderBeachPath(points, outerLeft, gradientEnd);
 
     if (beach.labels) {
-      this.renderBeachNumber(beach.labels[0], beachPoints[0], outerLeft, true);
-      this.renderBeachNumber(beach.labels[1], beachPoints[beachPoints.length - 1], outerRight,
+      this.renderBeachNumber(beach.labels[0], innerPoints[0], outerLeft, true);
+      this.renderBeachNumber(beach.labels[1], innerPoints[innerPoints.length - 1], outerRight,
         false);
     }
+    return points;
   }
 
   private renderBeachNumber(value: number, beachPoint: paper.Point, outerPoint: paper.Point, first: boolean) {
@@ -442,6 +438,76 @@ export class CatanBoardComponent implements OnChanges {
     point = getPointFromLine(point, outerPoint, first ? -90 : 90, BEACH_NUMBER_DISTANCE * scale);
     const textScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
     this.renderText(value + '', point, {bold: true, scale: textScale});
+  }
+
+  /**
+   * Render the oddly shaped piece that comes with seafarers.
+   */
+  private renderSeafarersBeach(beach: Beach, prevBeachPoints: paper.Point[]) {
+    // The code below is not my proudest moment.
+    // If the seafarers beach is placed vertically so that the ship legend is to the left, then
+    //  - outerRight is the top-most point
+    //  - verticalTop is the top left point near the legend.
+    //  - verticalBottom is the bottom left point with the sharp corner.
+    //  - outerLeft is the lower inner point that's a part of the fake hex that's included in this
+    //        piece.
+
+    const scale = this.adjustScale(BEACH_SCALE_FACTOR);
+    // Start with the points along the board.
+    const innerPoints = beach.corners.map(c => this.getCornerPoint(c));
+    const points = innerPoints.slice();
+
+    const outerRight =
+        getPointFromLine(points[points.length - 1], points[points.length - 2], -60,
+          BEACH_DISTANCE * scale);
+    const outerLeft = getPointFromLine(points[0], points[1], 60, HEX_SIDE_HEIGHT * scale);
+    // Sadly I can't figure out a good way to calculate where this point belongs. In renderBeach()
+    // it's generated through some elaborate geometry. Instead of doing something more elegant, I'm
+    // just awkwardly pulling the value from the previous beach.
+    const verticalBottom = prevBeachPoints[prevBeachPoints.length - 2];
+
+    const farPointRight =
+        getPointFromLine(outerRight, points[points.length - 1], -90, BEACH_DISTANCE * 100 * scale);
+    const rightPath = new paper.Path([outerRight, farPointRight]);
+    const farLeftPoint = verticalBottom.clone();
+    // The most outer line is vertical, so just draw a vertical line from verticalBottom.
+    farLeftPoint.y += (outerRight.y > verticalBottom.y ? 1 : -1) * BEACH_DISTANCE * 100 * scale;
+    const leftPath = new paper.Path([verticalBottom, farLeftPoint]);
+    const verticalTop = rightPath.getIntersections(leftPath)[0].point;
+
+    points.push(outerRight, verticalTop, verticalBottom, outerLeft);
+
+    this.renderBeachPath(points, verticalTop, innerPoints[innerPoints.length - 3]);
+
+    // Render the Ship legend as a brown rectangle
+    {
+      const xDir = verticalTop.x < outerRight.x ? 1 : -1;
+      const topLeft = new paper.Point(
+        verticalTop.x + xDir * 8 * scale,
+        weightedAverage(verticalBottom, verticalTop, .86).y,
+      );
+      const bottomRight = new paper.Point(
+        verticalTop.x + xDir * 23 * scale,
+        weightedAverage(verticalBottom, verticalTop, .42).y,
+      );
+      const legend = new paper.Shape.Rectangle(topLeft, bottomRight);
+      legend.fillColor = new paper.Color('#A1887F');
+      legend.strokeColor = new paper.Color('#4E342E');
+      legend.strokeWidth = 1;
+    }
+  }
+
+  private renderBeachPath(points: paper.Point[], gradientStart, gradientEnd): paper.Path {
+    const scale = this.adjustScale(BEACH_SCALE_FACTOR);
+    const path = new paper.Path(points);
+    {
+      // Beach gradient
+      path.fillColor = new paper.Color(createGradient(WATER_COLORS), gradientStart, gradientEnd);
+    }
+    path.strokeColor = new paper.Color('black');
+    path.strokeWidth = 1;
+    path.closed = true;
+    return path;
   }
 
   private renderPort(port: Port) {
