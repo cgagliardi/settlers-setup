@@ -76,7 +76,7 @@ function getGradientColors(resource: ResourceType): string[] {
     case ResourceType.DESERT:
       return ['#8F6455', '#795548', '#5D4037'];
     case ResourceType.GOLD:
-        return ['orange', 'yellow'];
+        return ['#EF6C00', '#FFB300', '#FFA000', '#FFCA28'];
     case ResourceType.ORE:
       return ['#CFD8DC', '#B0BEC5', '#90A4AE'];
     case ResourceType.SHEEP:
