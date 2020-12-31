@@ -49,7 +49,6 @@ export const SEAFARERS1 = {
     ]),
   centerCoords: [{x: 8, y: 2}],
   beachConnections: [
-    { x: 0, y: 2 },
     { x: 3, y: 0 },
     { x: 7, y: 0 },
     { x: 12, y: 0 },
@@ -59,6 +58,7 @@ export const SEAFARERS1 = {
     { x: 7, y: 7 },
     { x: 2, y: 7 },
     { x: 0, y: 4 },
+    { x: 0, y: 2 },
   ],
   ports: () => generatePorts([
       11, 0,
