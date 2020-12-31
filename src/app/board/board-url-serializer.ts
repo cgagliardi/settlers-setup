@@ -2,7 +2,7 @@
  * @fileoverview Serializes and deserializes boards for use in a URL.
  */
 import { Board, ResourceType, Port, Hex, BoardSpec } from './board';
-import { BOARD_SPECS } from './board-specs';
+import { BOARD_SPECS, SHAPE_URL_KEYS } from './board-specs';
 import { assert } from '../util/assert';
 import { FixedValuesSerializer } from '../util/fixed-values-serializer';
 import { BoardShape } from './specs/shapes-enum';
@@ -30,13 +30,6 @@ const HEX_RESOURCES = [
 
 const ROLL_NUMS = [null, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as number[];
 const rollNumSerializer = new FixedValuesSerializer(ROLL_NUMS);
-
-const SHAPE_URL_KEYS = {
-  [BoardShape.STANDARD]: 's',
-  [BoardShape.EXPANSION6]: 'e',
-  [BoardShape.SEAFARERS1]: '1',
-  [BoardShape.DRAGONS]: 'd',
-} as {[key in BoardShape]: string};
 
 /**
  * The board is serialized as

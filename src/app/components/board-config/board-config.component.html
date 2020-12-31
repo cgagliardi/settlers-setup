@@ -4,9 +4,11 @@
                      formControlName="boardShape"
                      [options]="boardShapes"></app-config-choice>
 
-  <app-config-choice label="Desert Placement"
-                     formControlName="desertPlacement"
-                     [options]="desertPlacements"></app-config-choice>
+  <div [style.display]="desertPlacementEnabled ? '' : 'none'">
+    <app-config-choice label="Desert Placement"
+                      formControlName="desertPlacement"
+                      [options]="desertPlacements"></app-config-choice>
+  </div>
 
   <div [style.display]="resourceDistributionEnabled ? '' : 'none'">
     <app-config-slider [style.display]="resourceDistributionEnabled ? '' : 'none'"

@@ -140,10 +140,12 @@ export class BalancedStrategy implements Strategy {
 
     // Good numbers tend to naturally end up on the beach.
     // Ensure there's at least 1 good inland number.
-    const inlandHex = sample(this.remainingHexes.filter(h => !isCoastal(h)));
-    inlandHex.rollNumber = this.remainingNumbers.pop();
-    this.initialResources.remove(inlandHex.resource);
-    pull(this.remainingHexes, inlandHex);
+    if (!board.spec.allCoastalHexes) {
+      const inlandHex = sample(this.remainingHexes.filter(h => !isCoastal(h)));
+      inlandHex.rollNumber = this.remainingNumbers.pop();
+      this.initialResources.remove(inlandHex.resource);
+      pull(this.remainingHexes, inlandHex);
+    }
 
     let resource;
     // tslint:disable-next-line:no-conditional-assignment

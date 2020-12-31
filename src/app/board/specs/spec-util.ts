@@ -1,5 +1,18 @@
 import { assert } from 'src/app/util/assert';
-import { Board, CoordinatePairs, Hex, HexGrid, Port, ResourceType } from '../board';
+import { Board, CoordinatePairs, Coordinate, Hex, HexGrid, Port, ResourceType } from '../board';
+
+export const STANDARD_SEAFARERS_BEACH_CONNECTIONS = [
+  { x: 3, y: 0 },
+  { x: 7, y: 0 },
+  { x: 12, y: 0 },
+  { x: 14, y: 3 },
+  { x: 14, y: 5 },
+  { x: 11, y: 7 },
+  { x: 7, y: 7 },
+  { x: 2, y: 7 },
+  { x: 0, y: 4 },
+  { x: 0, y: 2 },
+] as Coordinate[];
 
 /**
  * Example: createByCounts(['a', 3], ['b', 1]);

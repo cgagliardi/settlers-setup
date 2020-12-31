@@ -63,11 +63,13 @@ export class BoardConfigComponent implements OnChanges {
     BoardShape.STANDARD,
     BoardShape.EXPANSION6,
     BoardShape.SEAFARERS1,
+    BoardShape.SEAFARERS2,
     BoardShape.DRAGONS);
 
   desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
 
   hasDefaultPorts = true;
+  desertPlacementEnabled = true;
   resourceDistributionEnabled = true;
 
   configForm = this.fb.group({
@@ -88,19 +90,24 @@ export class BoardConfigComponent implements OnChanges {
           boardShape === BoardShape.STANDARD || boardShape === BoardShape.EXPANSION6;
 
       const spec = BOARD_SPECS[boardShape];
+
       // Toggle desert options based on board shape.
-      const desertPlacement = this.configForm.get('desertPlacement');
-      const desertValue = desertPlacement.value;
-      if (spec.centerCoords.length > 0) {
-        this.desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
-        if (desertValue === DesertPlacement.INLAND) {
-        desertPlacement.setValue(DesertPlacement.CENTER);
-      }
-      } else {
-        this.desertPlacements = DESERT_PLACEMENTS_SANS_CENTER;
-        if (desertValue === DesertPlacement.CENTER ||
-            desertValue === DesertPlacement.OFF_CENTER) {
-          desertPlacement.setValue(DesertPlacement.INLAND);
+      this.desertPlacementEnabled = !spec.allCoastalHexes;
+      if (this.desertPlacementEnabled) {
+        const desertPlacement = this.configForm.get('desertPlacement');
+        const desertValue = desertPlacement.value;
+        if (spec.centerCoords.length > 0) {
+          this.desertPlacementEnabled = true;
+          this.desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
+          if (desertValue === DesertPlacement.INLAND) {
+            desertPlacement.setValue(DesertPlacement.CENTER);
+          }
+        } else {
+          this.desertPlacements = DESERT_PLACEMENTS_SANS_CENTER;
+          if (desertValue === DesertPlacement.CENTER ||
+              desertValue === DesertPlacement.OFF_CENTER) {
+            desertPlacement.setValue(DesertPlacement.INLAND);
+          }
         }
       }
 
@@ -125,7 +132,8 @@ export class BoardConfigComponent implements OnChanges {
     const state = this.getFormState();
     const strategy =
         new BalancedStrategy({
-          desertPlacement: state.desertPlacement,
+          desertPlacement:
+              this.desertPlacementEnabled ? state.desertPlacement : DesertPlacement.RANDOM,
           resourceDistribution:
               this.resourceDistributionEnabled ?
               state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE : 1,

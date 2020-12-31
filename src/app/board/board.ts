@@ -130,6 +130,8 @@ export interface BoardSpec {
   readonly requiredResources: ReadonlyArray<[ResourceType, CoordinatePairs]>;
   readonly isResourceAllowed: (hex: Hex, resource: ResourceType) => boolean;
   readonly centerCoords: ReadonlyArray<Coordinate>;
+  // True for seafarers boards where all tiles are connected to water.
+  readonly allCoastalHexes?: boolean;
   readonly beachConnections: ReadonlyArray<BeachConnection>;
   readonly ports: () => Port[];
   // When true the resources at the ports are the defaults. If this is false, the resources on ports

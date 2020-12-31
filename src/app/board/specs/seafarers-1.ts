@@ -1,6 +1,7 @@
 import { BoardSpec, Hex, ResourceType } from '../board';
 import { BoardShape } from './shapes-enum';
-import { allowResourcesWithMainIslandRules, createByCounts, generatePorts, generateSeafarersBoard, inCoords } from './spec-util';
+// tslint:disable-next-line:max-line-length
+import { allowResourcesWithMainIslandRules, createByCounts, generatePorts, generateSeafarersBoard, STANDARD_SEAFARERS_BEACH_CONNECTIONS } from './spec-util';
 
 export const SEAFARERS1 = {
   shape: BoardShape.SEAFARERS1,
@@ -48,18 +49,7 @@ export const SEAFARERS1 = {
       10, 6,
     ]),
   centerCoords: [{x: 8, y: 2}],
-  beachConnections: [
-    { x: 3, y: 0 },
-    { x: 7, y: 0 },
-    { x: 12, y: 0 },
-    { x: 14, y: 3 },
-    { x: 14, y: 5 },
-    { x: 11, y: 7 },
-    { x: 7, y: 7 },
-    { x: 2, y: 7 },
-    { x: 0, y: 4 },
-    { x: 0, y: 2 },
-  ],
+  beachConnections: STANDARD_SEAFARERS_BEACH_CONNECTIONS,
   ports: () => generatePorts([
       11, 0,
       12, 0,
