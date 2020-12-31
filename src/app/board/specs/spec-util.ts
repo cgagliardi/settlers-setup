@@ -56,14 +56,31 @@ export function generatePorts(coordinatePairs: CoordinatePairs): Port[] {
  * Generates a standard hex-shaped settlers of catan board with the provided width and height.
  */
 export function generateStandardShapedBoard(board: Board): HexGrid {
+  return generateBoard(board, false /* isSeafarers */);
+}
+
+/**
+ * Generates a seafarers hex-shaped settlers of catan board with the provided width and height.
+ */
+export function generateSeafarersBoard(board: Board): HexGrid {
+  return generateBoard(board, true /* isSeafarers */);
+}
+
+function generateBoard(board: Board, isSeafarers: boolean): HexGrid {
   const hexes = new Array(board.dimensions.height);
   const middleRow = (board.dimensions.height - 1) / 2;
   for (let r = 0; r < board.dimensions.height; r++) {
     // Columns alternate in the array every other index.
     // See Default Board Layout at the top of this file.
     const distFromMiddle = Math.abs(r - middleRow);
-    const hexesInRow = board.dimensions.width - distFromMiddle;
-    const startIndex = distFromMiddle;
+    let startIndex;
+    if (isSeafarers) {
+      // On seafarers boards, the middle row is set 1 column in from the rows above/below.
+      startIndex = distFromMiddle === 0 ? 1 : distFromMiddle - 1;
+    } else {
+      startIndex = distFromMiddle;
+    }
+    const hexesInRow = board.dimensions.width - startIndex;
     const maxCols = startIndex + hexesInRow * 2;
     hexes[r] = new Array(maxCols);
     for (let c = startIndex; c < maxCols; c++) {

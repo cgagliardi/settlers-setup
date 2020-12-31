@@ -211,7 +211,11 @@ export class CatanBoardComponent implements OnChanges {
       }
     }
     for (const beach of this.board.beaches) {
-      this.renderBeach(beach);
+      try {
+        this.renderBeach(beach);
+      } catch (e) {
+        console.error(e);
+      }
     }
     for (const port of this.board.ports) {
       this.renderPort(port);

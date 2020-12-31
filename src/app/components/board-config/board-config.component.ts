@@ -6,6 +6,7 @@ import { Strategy, DesertPlacement } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 import { CONFIG_SLIDER_MAX_VALUE } from '../config-slider/config-slider.component';
 import { BoardShape } from 'src/app/board/specs/shapes-enum';
+import { RandomStrategy } from 'src/app/board/strategy/random-strategy';
 
 export interface FormState {
   boardShape: BoardShape;
