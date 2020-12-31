@@ -301,6 +301,13 @@ export class BalancedStrategy implements Strategy {
         availableHexes = availableHexes.filter(hex =>
             isCoastal(hex) && !has2TypedPorts(hex));
         break;
+
+      case DesertPlacement.INLAND:
+        availableHexes = availableHexes.filter(hex => !isCoastal(hex));
+        break;
+
+      default:
+        throw new Error('Unsupported desert placement: ' + this.desertPlacement);
     }
 
     while (this.remainingResources.remove(ResourceType.DESERT)) {

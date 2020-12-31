@@ -5,6 +5,7 @@ export enum DesertPlacement {
   RANDOM = 'Random',
   CENTER = 'Center',
   OFF_CENTER = 'Off Center',
+  INLAND = 'Inland',
   COAST = 'Coast',
 }
 

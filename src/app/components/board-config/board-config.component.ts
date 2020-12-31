@@ -39,6 +39,19 @@ function toOptionDef(...values: Array<string|[string, string]>): OptionDef[] {
   });
 }
 
+const DESERT_PLACEMENTS_WITH_CENTER =
+    toOptionDef(
+      DesertPlacement.RANDOM,
+      DesertPlacement.CENTER,
+      DesertPlacement.OFF_CENTER,
+      DesertPlacement.COAST);
+
+const DESERT_PLACEMENTS_SANS_CENTER =
+      toOptionDef(
+        DesertPlacement.RANDOM,
+        DesertPlacement.INLAND,
+        DesertPlacement.COAST);
+
 @Component({
   selector: 'app-board-config',
   templateUrl: './board-config.component.html',
@@ -46,16 +59,12 @@ function toOptionDef(...values: Array<string|[string, string]>): OptionDef[] {
 })
 export class BoardConfigComponent implements OnChanges {
   boardShapes = toOptionDef(
-    BoardShape.DRAGONS,
     BoardShape.STANDARD,
     BoardShape.EXPANSION6,
-    BoardShape.SEAFARERS1);
+    BoardShape.SEAFARERS1,
+    BoardShape.DRAGONS);
 
-  desertPlacements = toOptionDef(
-    DesertPlacement.RANDOM,
-    DesertPlacement.CENTER,
-    DesertPlacement.OFF_CENTER,
-    DesertPlacement.COAST);
+  desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
 
   configForm = this.fb.group({
     boardShape: [this.boardShapes[0].value],
@@ -68,12 +77,34 @@ export class BoardConfigComponent implements OnChanges {
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
   @Input() formState?: FormState|null;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder) {
+    this.configForm.get('boardShape').valueChanges.subscribe((boardShape: BoardShape) => {
+      const desertPlacement = this.configForm.get('desertPlacement');
+      const desertValue = desertPlacement.value;
+      if (this.boardShapeHasCenter(boardShape)) {
+        this.desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
+        if (desertValue === DesertPlacement.INLAND) {
+        desertPlacement.setValue(DesertPlacement.CENTER);
+      }
+      } else {
+        this.desertPlacements = DESERT_PLACEMENTS_SANS_CENTER;
+        if (desertValue === DesertPlacement.CENTER ||
+            desertValue === DesertPlacement.OFF_CENTER) {
+          desertPlacement.setValue(DesertPlacement.INLAND);
+        }
+      }
+    });
+  }
 
   ngOnChanges() {
     if (this.formState) {
       this.configForm.patchValue(this.formState);
     }
+  }
+
+  private boardShapeHasCenter(boardShape: BoardShape): boolean {
+    const spec = BOARD_SPECS[boardShape];
+    return spec.centerCoords.length > 0;
   }
 
   /**
