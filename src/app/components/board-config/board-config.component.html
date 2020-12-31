@@ -8,12 +8,15 @@
                      formControlName="desertPlacement"
                      [options]="desertPlacements"></app-config-choice>
 
-  <app-config-slider label="Resource Distribution"
-                     minLabel="Clumped"
-                     maxLabel="Even"
-                     formControlName="resourceDistribution"></app-config-slider>
+  <div [style.display]="resourceDistributionEnabled ? '' : 'none'">
+    <app-config-slider [style.display]="resourceDistributionEnabled ? '' : 'none'"
+                      label="Resource Distribution"
+                      minLabel="Clumped"
+                      maxLabel="Even"
+                      formControlName="resourceDistribution"></app-config-slider>
+  </div>
 
-  <div class="checkbox" [style.display]="hasDefaultPorts ? 'block' : 'none'">
+  <div class="checkbox" [style.display]="hasDefaultPorts ? '' : 'none'">
     <mat-checkbox formControlName="shufflePorts">Shuffle ports</mat-checkbox>
   </div>
   <div class="checkbox">

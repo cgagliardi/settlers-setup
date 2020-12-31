@@ -1,4 +1,4 @@
-hide extra boards in config
+add additional boards
+change board option to a dropdown
 render movable ports
-render janky beaches
-there's a bug in clumped resource distribution throwing an error.
+get "clumped" resource distrubiton working on seafarers.

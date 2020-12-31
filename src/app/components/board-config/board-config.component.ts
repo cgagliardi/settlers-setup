@@ -68,6 +68,7 @@ export class BoardConfigComponent implements OnChanges {
   desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
 
   hasDefaultPorts = true;
+  resourceDistributionEnabled = true;
 
   configForm = this.fb.group({
     boardShape: [this.boardShapes[0].value],
@@ -82,6 +83,10 @@ export class BoardConfigComponent implements OnChanges {
 
   constructor(private fb: FormBuilder) {
     this.configForm.get('boardShape').valueChanges.subscribe((boardShape: BoardShape) => {
+      // TODO: Get "clumped" resource distribution working on seafarers.
+      this.resourceDistributionEnabled =
+          boardShape === BoardShape.STANDARD || boardShape === BoardShape.EXPANSION6;
+
       const spec = BOARD_SPECS[boardShape];
       // Toggle desert options based on board shape.
       const desertPlacement = this.configForm.get('desertPlacement');
@@ -121,7 +126,9 @@ export class BoardConfigComponent implements OnChanges {
     const strategy =
         new BalancedStrategy({
           desertPlacement: state.desertPlacement,
-          resourceDistribution: state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE,
+          resourceDistribution:
+              this.resourceDistributionEnabled ?
+              state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE : 1,
           shufflePorts: this.hasDefaultPorts ? state.shufflePorts : true,
           allowResourceOnPort: state.allowResourceOnPort,
         });
