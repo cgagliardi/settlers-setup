@@ -190,6 +190,9 @@ export class BalancedStrategy implements Strategy {
             possibleResources = possibleResources.filter(r => !neighborResources.includes(r));
           }
         }
+        if (!board.isResourceAllowed(hex, ResourceType.GOLD)) {
+          possibleResources = possibleResources.filter(r => r !== ResourceType.GOLD);
+        }
         const resource = sample(possibleResources);
         if (!resource) {
           return false;
