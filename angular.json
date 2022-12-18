@@ -27,7 +27,9 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/_redirects",
+              "src/404.html"
             ],
             "styles": [
               "src/styles.scss"
@@ -90,7 +92,9 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/_redirects",
+              "src/404.html"
             ],
             "styles": [
               "src/styles.scss"
