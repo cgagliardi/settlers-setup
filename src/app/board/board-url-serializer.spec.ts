@@ -96,10 +96,10 @@ describe('board-url-serializer', () => {
     rollNums.sort();
 
     for (const hex of board.hexes) {
-      hex.resource = resources.shift();
+      hex.resource = resources.shift()!;
 
       if (hex.resource !== ResourceType.DESERT) {
-        hex.rollNumber = rollNums.shift();
+        hex.rollNumber = rollNums.shift()!;
       }
     }
 

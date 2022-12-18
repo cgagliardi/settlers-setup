@@ -34,8 +34,8 @@ export class ConfigSliderComponent implements ControlValueAccessor {
   onTouched: any = () => { };
 
 
-  handleChange(change: MatRadioChange) {
-    this.value = change.value;
+  handleChange(value: number) {
+    this.value = value;
   }
 
   get value(): number {
