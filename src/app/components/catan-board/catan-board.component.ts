@@ -5,7 +5,7 @@ import { assert } from '../../util/assert';
 import * as bezier from 'bezier-easing';
 import { findHighestBy, findLowestBy } from 'src/app/util/collections';
 
-import { clone, round, shuffle } from 'lodash';
+import { clone, round, shuffle } from 'lodash-es';
 
 // ====== Render Sizing ======
 // Note: the "scale factor" constants are used to slow down or speed up how much the numbers are

@@ -5,7 +5,7 @@ import { SettlersConfig, BoardConfigComponent, FormState } from './components/bo
 import { SlidingCardComponent } from './components/sliding-card/sliding-card.component';
 import { serialize, deserialize, hasCustomPorts } from './board/board-url-serializer';
 
-import { isEqual } from 'lodash';
+import { isEqual } from 'lodash-es';
 
 const BOARD_URL_REGEX = /\/board\/([a-z\dA-Z\-]+)/;
 @Component({

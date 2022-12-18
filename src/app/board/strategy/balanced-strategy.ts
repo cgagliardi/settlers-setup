@@ -4,7 +4,7 @@ import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
 import { findAllLowestBy, hasAll, sumByKey, findHighestBy, countMatches } from 'src/app/util/collections';
 
-import { mean, pull, round, sample, sortBy, sum, sumBy } from 'lodash';
+import { mean, pull, round, sample, sortBy, sum, sumBy } from 'lodash-es';
 import { BoardShape } from '../specs/shapes-enum';
 
 // When generating a board, several boards are generated, returning the best one. The number of

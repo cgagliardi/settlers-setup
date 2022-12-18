@@ -6,7 +6,7 @@ import { BOARD_SPECS, SHAPE_URL_KEYS } from './board-specs';
 import { assert } from '../util/assert';
 import { FixedValuesSerializer } from '../util/fixed-values-serializer';
 import { BoardShape } from './specs/shapes-enum';
-import { uniq } from 'lodash';
+import { uniq } from 'lodash-es';
 
 const PORT_RESOURCES = [
   ResourceType.ANY,

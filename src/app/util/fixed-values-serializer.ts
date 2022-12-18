@@ -22,7 +22,7 @@
  */
 import { assert } from './assert';
 
-import { padStart } from 'lodash';
+import { padStart } from 'lodash-es';
 
 // A block is a group of 8 base 62 characters. *** digits is the largest base62 number without going
 // over Number.MAX_SAFE_INTEGER. FixedValuesSerializer serializes data into groups of 8 characters
