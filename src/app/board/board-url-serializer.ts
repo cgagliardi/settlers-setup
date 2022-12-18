@@ -6,7 +6,7 @@ import { BOARD_SPECS, SHAPE_URL_KEYS } from './board-specs';
 import { assert } from '../util/assert';
 import { FixedValuesSerializer } from '../util/fixed-values-serializer';
 import { BoardShape } from './specs/shapes-enum';
-import uniq from 'lodash/uniq';
+import { uniq } from 'lodash';
 
 const PORT_RESOURCES = [
   ResourceType.ANY,
@@ -28,7 +28,7 @@ const HEX_RESOURCES = [
   ResourceType.GOLD,
 ] as ResourceType[];
 
-const ROLL_NUMS = [null, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as number[];
+const ROLL_NUMS = [null, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] as Array<number|null>;
 const rollNumSerializer = new FixedValuesSerializer(ROLL_NUMS);
 
 /**
@@ -40,7 +40,7 @@ export function serialize(board: Board): string {
   const shape = serializeShape(board.shape);
 
   const hexResourceSerializer = createHexResourceSerializer(board.spec);
-  const hexResources = hexResourceSerializer.serialize(board.mutableHexes.map(h => h.resource));
+  const hexResources = hexResourceSerializer.serialize(board.mutableHexes.map(h => h.resource!));
   const rollNums = rollNumSerializer.serialize(board.mutableHexes.map(h => h.rollNumber));
 
   let serialized = '3' + shape + hexResources + '-' + rollNums;
@@ -71,7 +71,7 @@ export function deserialize(val: string): Board {
   const rollNumVal = parts[1];
 
   const hexResources = boardSpec.resources();
-  const rollNums = boardSpec.rollNumbers();
+  const rollNums: Array<number|null> = boardSpec.rollNumbers();
   // Account for the "null" values that will be in roll numbers, which represents a desert
   // hex. Desert hexes do not have roll numbers.
   for (const resource of hexResources) {
@@ -120,8 +120,8 @@ function serializeShape(shape: BoardShape): string {
 }
 
 function deserializeShape(val: string): BoardShape {
-  for (const shape in SHAPE_URL_KEYS) {
-    if (SHAPE_URL_KEYS[shape] === val) {
+  for (const [shape, urlKey] of Object.entries(SHAPE_URL_KEYS)) {
+    if (urlKey === val) {
       return shape as BoardShape;
     }
   }
@@ -133,7 +133,7 @@ function deserializeEntities<E, V>(
     serializer: FixedValuesSerializer<V>,
     valueSet: Array<V>,
     list: ReadonlyArray<E>,
-    setter: (entity: E, value: V) => {}) {
+    setter: (entity: E, value: V) => void) {
   const values = serializer.deserialize(serialized, valueSet);
   for (let i = 0; i < list.length; i++) {
     if (values[i] !== undefined) {

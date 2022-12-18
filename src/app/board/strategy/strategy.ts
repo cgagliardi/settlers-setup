@@ -41,6 +41,6 @@ export function shufflePorts(board: Board) {
     resources.push(port.resource);
   }
   for (const port of board.ports) {
-    port.resource = resources.pop();
+    port.resource = resources.pop()!;
   }
 }

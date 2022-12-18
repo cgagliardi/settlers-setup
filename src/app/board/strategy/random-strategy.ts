@@ -24,10 +24,10 @@ export class RandomStrategy implements Strategy {
         if (!board.isResourceAllowed(hex, ResourceType.DESERT)) {
           excluded.push(ResourceType.DESERT);
         }
-        hex.resource = resources.popExcluding(...excluded);
+        hex.resource = resources.popExcluding(...excluded)!;
       }
       if (hex.resource !== ResourceType.DESERT && !rollNumbers.isEmpty()) {
-        hex.rollNumber = rollNumbers.pop();
+        hex.rollNumber = rollNumbers.pop()!;
       }
     }
     // This is done so that RandomStrategy can be used during development, when a spec isn't

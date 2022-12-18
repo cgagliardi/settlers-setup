@@ -2,7 +2,7 @@
  * @fileoverview Contains the specification for each supported Catan board.
  */
 
-import { BoardSpec, Board, Hex, ResourceType, HexGrid, CoordinatePairs, Port } from './board';
+import { BoardSpec } from './board';
 import { BoardShape } from './specs/shapes-enum';
 import { STANDARD } from './specs/standard';
 import { SEAFARERS1 } from './specs/seafarers-1';
@@ -22,10 +22,10 @@ export const BOARD_SPECS: { readonly [key in BoardShape]: BoardSpec } = {
  * These are used to encode the shape in the URL as a single character. The values below must be
  * unique.
  */
-export const SHAPE_URL_KEYS = {
+export const SHAPE_URL_KEYS: {readonly [key in BoardShape]: string} = {
   [BoardShape.STANDARD]: 's',
   [BoardShape.EXPANSION6]: 'e',
   [BoardShape.SEAFARERS1]: '1',
   [BoardShape.SEAFARERS2]: '2',
   [BoardShape.DRAGONS]: 'd',
-} as {[key in BoardShape]: string};
+};

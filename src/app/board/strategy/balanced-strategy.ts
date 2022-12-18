@@ -4,13 +4,7 @@ import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
 import { findAllLowestBy, hasAll, sumByKey, findHighestBy, countMatches } from 'src/app/util/collections';
 
-import mean from 'lodash/mean';
-import pull from 'lodash/pull';
-import round from 'lodash/round';
-import sample from 'lodash/sample';
-import sortBy from 'lodash/sortBy';
-import sum from 'lodash/sum';
-import sumBy from 'lodash/sumBy';
+import { mean, pull, round, sample, sortBy, sum, sumBy } from 'lodash';
 import { BoardShape } from '../specs/shapes-enum';
 
 // When generating a board, several boards are generated, returning the best one. The number of
@@ -46,14 +40,14 @@ function createRandomQueueByPercent<T>(
 export class BalancedStrategy implements Strategy {
   readonly name = 'Balanced';
 
-  private desertPlacement: DesertPlacement;
+  private desertPlacement!: DesertPlacement;
 
-  private remainingHexes: Hex[];
+  private remainingHexes!: Hex[];
   // Sorted by how good the number is.
-  private remainingNumbers: number[];
-  private remainingResources: RandomQueue<ResourceType>;
-  private board: Board;
-  private initialResources: RandomQueue<ResourceType>;
+  private remainingNumbers!: number[];
+  private remainingResources!: RandomQueue<ResourceType>;
+  private board!: Board;
+  private initialResources!: RandomQueue<ResourceType>;
 
   constructor(readonly options: StrategyOptions) {}
 
@@ -84,7 +78,7 @@ export class BalancedStrategy implements Strategy {
     console.log(bestBoardScoreStats);
 
     firstGenerated = true;
-    return bestBoard;
+    return bestBoard!;
   }
 
   private isBetterScore(previous: number|null, next: number): boolean {
@@ -103,11 +97,11 @@ export class BalancedStrategy implements Strategy {
     this.scoreHexesAndCorners(true /* balanceCoastAndDesert */);
     const scores = this.board.corners.map(c => c.score);
     const scoreMean = mean(scores);
-    const scoreSum = sum(scores.map(s => Math.pow(scoreMean - s, 2)));
+    const scoreSum = sum(scores.map(s => Math.pow(scoreMean - s!, 2)));
     const variance = scoreSum / this.board.corners.length;
 
     this.scoreHexesAndCorners(false /* balanceCoastAndDesert */);
-    const highestCorner = findHighestBy(this.board.corners, c => c.score).score;
+    const highestCorner = findHighestBy(this.board.corners, c => c.score!)!.score!;
     return [variance + (highestCorner - 10), {variance, highestCorner}];
   }
 
@@ -141,9 +135,9 @@ export class BalancedStrategy implements Strategy {
     // Good numbers tend to naturally end up on the beach.
     // Ensure there's at least 1 good inland number.
     if (!board.spec.allCoastalHexes) {
-      const inlandHex = sample(this.remainingHexes.filter(h => !isCoastal(h)));
-      inlandHex.rollNumber = this.remainingNumbers.pop();
-      this.initialResources.remove(inlandHex.resource);
+      const inlandHex = sample(this.remainingHexes.filter(h => !isCoastal(h)))!;
+      inlandHex.rollNumber = this.remainingNumbers.pop()!;
+      this.initialResources.remove(inlandHex.resource!);
       pull(this.remainingHexes, inlandHex);
     }
 
@@ -176,11 +170,11 @@ export class BalancedStrategy implements Strategy {
     // resource.
     if (!this.options.allowResourceOnPort) {
       const hexesWithTypedPorts =
-          board.mutableHexes.filter(hex => !hex.resource && hex.getTypedPortResources().size);
+          board.mutableHexes.filter(hex => !hex.resource && hex.getTypedPortResources()!.size);
       for (const hex of hexesWithTypedPorts) {
         const strategy = resourceDistributionQueue.pop();
         let possibleResources =
-            this.remainingResources.vals.filter(r => !hex.getTypedPortResources().has(r));
+            this.remainingResources.vals.filter(r => !hex.getTypedPortResources()!.has(r));
         const neighborResources = hex.getNeighborResources().filter(r => r !== ResourceType.DESERT);
         if (neighborResources.length) {
           if (strategy === ResourceDistribution.CLUMPED) {
@@ -209,7 +203,7 @@ export class BalancedStrategy implements Strategy {
     // so that the function can be ran again on a new board.
     this.remainingHexes = board.mutableHexes.filter(h => !h.resource);
     assert(this.remainingHexes.length === this.remainingResources.length);
-    let resourceDistribution: ResourceDistribution;
+    let resourceDistribution: ResourceDistribution|undefined;
     // tslint:disable-next-line:no-conditional-assignment
     while (resourceDistribution = resourceDistributionQueue.pop()) {
       let success: boolean;
@@ -238,14 +232,14 @@ export class BalancedStrategy implements Strategy {
     }
     // Find all of the hexes where we could place a clumped resource.
     const candidateHexes = this.remainingHexes.filter(h =>
-        h.getNeighbors().findIndex(n => availableResources.has(n.resource)) > -1);
+        h.getNeighbors().findIndex(n => availableResources.has(n.resource!)) > -1);
     if (!candidateHexes.length) {
       return false;
     }
-    const hex = sample(candidateHexes);
+    const hex = sample(candidateHexes)!;
     const candidateResources =
-        hex.getNeighbors().filter(n => availableResources.has(n.resource)).map(n => n.resource);
-    const resource = sample(candidateResources);
+        hex.getNeighbors().filter(n => availableResources.has(n.resource!)).map(n => n.resource);
+    const resource = sample(candidateResources)!;
     // isResourceAllowed is used to decide when gold is allowed. Here we assume that a gold resource
     // can always be placed next to another gold resource.
     assert(board.isResourceAllowed(hex, resource));
@@ -256,7 +250,7 @@ export class BalancedStrategy implements Strategy {
   }
 
   placeResourceEven(board: Board): boolean {
-    const hex = this.remainingHexes.pop();
+    const hex = this.remainingHexes.pop()!;
     const bannedResources = hex.getNeighborResources();
     // Gold is only allowed on certain hexes.
     if (!board.isResourceAllowed(hex, ResourceType.GOLD)) {
@@ -271,10 +265,10 @@ export class BalancedStrategy implements Strategy {
   }
 
   placeResourceRandom(board: Board) {
-    const hex = this.remainingHexes.pop();
+    const hex = this.remainingHexes.pop()!;
     const bannedResources =
         board.isResourceAllowed(hex, ResourceType.GOLD) ? [ResourceType.GOLD] : [];
-    hex.resource = this.remainingResources.popExcluding(...bannedResources);
+    hex.resource = this.remainingResources.popExcluding(...bannedResources)!;
   }
 
   placeDesert(board: Board) {
@@ -335,11 +329,11 @@ export class BalancedStrategy implements Strategy {
       potentialHexes = potentialHexes.filter(h => h.resource === resourceType);
     }
 
-    potentialHexes = findAllLowestBy(potentialHexes, h => h.score);
-    const hex = sample(potentialHexes);
+    potentialHexes = findAllLowestBy(potentialHexes, h => h.score!)!;
+    const hex = sample(potentialHexes)!;
     pull(this.remainingHexes, hex);
 
-    hex.rollNumber = this.remainingNumbers.pop();
+    hex.rollNumber = this.remainingNumbers.pop()!;
   }
 
   /**
@@ -353,7 +347,7 @@ export class BalancedStrategy implements Strategy {
       const hexes = corner.getHexes();
       // Sum the value of each neighboring hex.
       let score = sumBy(hexes, hex =>
-          this.getResourceValue(hex.resource) * this.getRollNumValue(hex.rollNumber, 0));
+          this.getResourceValue(hex.resource!) * this.getRollNumValue(hex.rollNumber!, 0));
 
       // If balanceCoastAndDesert is set, pretend like the corner always has 3 resourced hexes where
       // the rollNumber is a bad number.
@@ -368,12 +362,12 @@ export class BalancedStrategy implements Strategy {
       if (corner.port) {
         if (this.options.allowResourceOnPort) {
           const matchingReourceHexes =
-              corner.getHexes().filter(h => h.resource === corner.port.resource);
+              corner.getHexes().filter(h => h.resource === corner.port!.resource);
           if (matchingReourceHexes.length) {
             notes.push(['Has matching port']);
           }
           score += sum(
-              matchingReourceHexes.map(hex => this.getRollNumValue(hex.rollNumber, 2) * 0.3));
+              matchingReourceHexes.map(hex => this.getRollNumValue(hex.rollNumber!, 2) * 0.3));
         }
         notes.push(['Has port']);
         score += 3;
@@ -396,7 +390,7 @@ export class BalancedStrategy implements Strategy {
 
     for (const hex of this.board.mutableHexes) {
       const sumOfCorners = sumBy(hex.getCorners(),
-          corner => Math.pow(corner.score, HEX_CORNER_POWER));
+          corner => Math.pow(corner.score!, HEX_CORNER_POWER));
       hex.score = sumOfCorners;
     }
   }
@@ -407,7 +401,7 @@ export class BalancedStrategy implements Strategy {
       if (hex.resource === ResourceType.DESERT) {
         continue;
       }
-      let num = this.getRollNumValue(hex.rollNumber, defaultRollScore);
+      let num = this.getRollNumValue(hex.rollNumber!, defaultRollScore);
       if (map.has(hex.resource)) {
         num += map.get(hex.resource);
       }

@@ -1,3 +1,19 @@
-app-config-choice, .checkbox {
-  margin: 10px 0px;
+:host {
+  color: black;
+}
+
+app-config-choice {
+  margin: 8px 0 24px;
+}
+
+app-config-slider {
+  margin-bottom: 14px;
+}
+
+.checkbox {
+  margin: 0;
+}
+
+#submit-box {
+  margin-top: 12px;
 }

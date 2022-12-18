@@ -1,6 +1,11 @@
-@import '../material-theme.scss';
+@use 'sass:map';
+@use '@angular/material' as mat;
+@use '../styles.scss' as styles;
 
-$button-padding: 20px;
+$color-config: mat.get-color-config(styles.$settlers-setup-theme);
+$primary-palette: map.get($color-config, 'primary');
+
+$button-padding: 12px;
 $board-padding-topbottom: 10px;
 $board-padding-sides: 0px;
 
@@ -11,15 +16,16 @@ $board-padding-sides: 0px;
 }
 
 header {
-  background: $primary;
+  background: mat.get-color-from-palette($primary-palette, default);
   color: white;
-  font-size: 22px;
+  font-size: 24px;
+  line-height: 34px;
   font-weight: bold;
   letter-spacing: 0.02em;
   // We add an extra 100px of space above the header so that the negative scroll on Apple devices
   // continues to show the header.
   margin-top: -100px;
-  padding: 118px 0 11px 20px;
+  padding: 114px 0 8px 24px;
   position: relative;
   margin-bottom: 10px;
   z-index: 20;

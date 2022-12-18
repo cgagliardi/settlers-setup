@@ -2,7 +2,7 @@ import { serialize, deserialize } from './board-url-serializer';
 import { Board, ResourceType, ROLL_NUMBERS, BoardSpec } from './board';
 import { BOARD_SPECS } from './board-specs';
 
-import flatten from 'lodash/flatten';
+import { flatten } from 'lodash';
 import { BoardShape } from './specs/shapes-enum';
 
 describe('board-url-serializer', () => {

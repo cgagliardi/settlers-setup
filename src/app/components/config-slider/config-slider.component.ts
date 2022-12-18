@@ -1,6 +1,6 @@
 import { Component, Input, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MatRadioChange } from '@angular/material';
+import { MatRadioChange } from '@angular/material/radio';
 
 export interface OptionDef {
   label: string;
@@ -24,11 +24,11 @@ export const CONFIG_SLIDER_MAX_VALUE = 100;
 export class ConfigSliderComponent implements ControlValueAccessor {
   readonly MAX_VALUE = 100;
 
-  @Input() label: string;
-  @Input() minLabel: string;
-  @Input() maxLabel: string;
+  @Input() label: string = '';
+  @Input() minLabel: string = '';
+  @Input() maxLabel: string = '';
   // tslint:disable-next-line:no-input-rename variable-name
-  @Input('value') _value: number;
+  @Input('value') _value: number = 0;
 
   onChange: any = () => { };
   onTouched: any = () => { };

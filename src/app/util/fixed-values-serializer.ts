@@ -22,7 +22,7 @@
  */
 import { assert } from './assert';
 
-import padStart from 'lodash/padStart';
+import { padStart } from 'lodash';
 
 // A block is a group of 8 base 62 characters. *** digits is the largest base62 number without going
 // over Number.MAX_SAFE_INTEGER. FixedValuesSerializer serializes data into groups of 8 characters
@@ -39,7 +39,7 @@ export class FixedValuesSerializer<V> {
    */
   constructor(private readonly valueSet: V[]) {}
 
-  serialize(values: Array<V|null>): string {
+  serialize(values: V[]): string {
     const blockNums = this.convertToBlockNumbers(values);
     return blockNums.map((num, index) => {
       let str = base62Encode(num);
@@ -101,7 +101,7 @@ export class FixedValuesSerializer<V> {
 
     const values: Array<V> = [];
     for (let i = 0; i < serialized.length; i += BLOCK_SIZE) {
-      const block = serialized.substr(i, BLOCK_SIZE);
+      const block = serialized.substring(i, i + BLOCK_SIZE);
       let blockNumber = base62Decode(block);
 
       while (blockNumber > 0) {

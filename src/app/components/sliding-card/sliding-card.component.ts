@@ -27,7 +27,7 @@ export function getClosedTransform(height: string|number): string {
    ],
 })
 export class SlidingCardComponent implements OnInit {
-  @ViewChild('container', {static: true}) containerRef: ElementRef;
+  @ViewChild('container', {static: true}) containerRef!: ElementRef;
   private open = false;
 
   @HostBinding('@slide') get slide() {

@@ -1,8 +1,7 @@
 <h2>{{label}}:</h2>
 <mat-slider [max]="MAX_VALUE"
-            min="0"
-            [value]="value"
-            (change)="handleChange($event)">
+            min="0">
+  <input matSliderThumb [(ngModel)]="value" (ngModelChange)="handleChange($event)">
 </mat-slider>
 <div class="min-label">{{minLabel}}</div>
 <div class="max-label">{{maxLabel}}</div>

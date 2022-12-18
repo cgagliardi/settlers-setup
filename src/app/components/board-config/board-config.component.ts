@@ -6,7 +6,6 @@ import { Strategy, DesertPlacement } from '../../board/strategy/strategy';
 import { FormBuilder } from '@angular/forms';
 import { CONFIG_SLIDER_MAX_VALUE } from '../config-slider/config-slider.component';
 import { BoardShape } from 'src/app/board/specs/shapes-enum';
-import { RandomStrategy } from 'src/app/board/strategy/random-strategy';
 
 export interface FormState {
   boardShape: BoardShape;
@@ -16,9 +15,9 @@ export interface FormState {
   allowResourceOnPort: boolean;
 }
 
-interface OptionDef {
+interface OptionDef<T extends string> {
   label: string;
-  value: string;
+  value: T;
 }
 
 export interface SettlersConfig {
@@ -31,12 +30,12 @@ export interface SettlersConfig {
  * Converts an array of values into OptionDefs where the entry is both the label and value.
  * If a sub-array is given, the first value is used as the label, and the second as the value.
  */
-function toOptionDef(...values: Array<string|[string, string]>): OptionDef[] {
+function toOptionDef<T extends string>(...values: Array<T|[string, T]>): OptionDef<T>[] {
   return values.map(v => {
     if (typeof v === 'string') {
-      return {label: v, value: v} as OptionDef;
+      return {label: v, value: v} as OptionDef<T>;
     }
-    return {label: v[0], value: v[1]} as OptionDef;
+    return {label: v[0], value: v[1]} as OptionDef<T>;
   });
 }
 
@@ -58,23 +57,23 @@ const DESERT_PLACEMENTS_SANS_CENTER =
   templateUrl: './board-config.component.html',
   styleUrls: ['./board-config.component.scss']
 })
-export class BoardConfigComponent implements OnChanges {
-  boardShapes = toOptionDef(
+export class BoardConfigComponent {
+  boardShapes: OptionDef<BoardShape>[] = toOptionDef(
     BoardShape.STANDARD,
     BoardShape.EXPANSION6,
     BoardShape.SEAFARERS1,
     BoardShape.SEAFARERS2,
     BoardShape.DRAGONS);
 
-  desertPlacements = DESERT_PLACEMENTS_WITH_CENTER;
+  desertPlacements: OptionDef<DesertPlacement>[] = DESERT_PLACEMENTS_WITH_CENTER;
 
   hasDefaultPorts = true;
   desertPlacementEnabled = true;
   resourceDistributionEnabled = true;
 
   configForm = this.fb.group({
-    boardShape: [this.boardShapes[0].value],
-    desertPlacement: [this.desertPlacements[0].value],
+    boardShape: this.boardShapes[0].value,
+    desertPlacement: this.desertPlacements[0].value,
     resourceDistribution: CONFIG_SLIDER_MAX_VALUE,
     shufflePorts: false,
     allowResourceOnPort: false,
@@ -84,7 +83,9 @@ export class BoardConfigComponent implements OnChanges {
   @Input() formState?: FormState|null;
 
   constructor(private fb: FormBuilder) {
-    this.configForm.get('boardShape').valueChanges.subscribe((boardShape: BoardShape) => {
+    this.configForm.get('boardShape')!.valueChanges.subscribe((boardShape: BoardShape|null) => {
+      if (!boardShape) return;
+
       // TODO: Get "clumped" resource distribution working on seafarers.
       this.resourceDistributionEnabled =
           boardShape === BoardShape.STANDARD || boardShape === BoardShape.EXPANSION6;
@@ -94,7 +95,7 @@ export class BoardConfigComponent implements OnChanges {
       // Toggle desert options based on board shape.
       this.desertPlacementEnabled = !spec.allCoastalHexes;
       if (this.desertPlacementEnabled) {
-        const desertPlacement = this.configForm.get('desertPlacement');
+        const desertPlacement = this.configForm.get('desertPlacement')!;
         const desertValue = desertPlacement.value;
         if (spec.centerCoords.length > 0) {
           this.desertPlacementEnabled = true;
@@ -125,7 +126,7 @@ export class BoardConfigComponent implements OnChanges {
    * @return the current state of the form.
    */
   getFormState(): FormState {
-    return this.configForm.value;
+    return this.configForm.value as FormState;
   }
 
   getConfig(): SettlersConfig {

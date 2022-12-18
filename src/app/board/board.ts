@@ -3,6 +3,7 @@
  * define a Settlers board (BoardSpec). Additionaly, this file provides the Board class, which a
  * Strategy manipulates to fill a board and the UI reads to render the board.
  */
+import { defined } from '../util/collections';
 import { BoardShape } from './specs/shapes-enum';
 
 export enum ResourceType {
@@ -182,7 +183,7 @@ export class Corner {
       this.board.getHex(this.x - 2, this.y),
       this.board.getHex(this.x - 1, this.y),
       this.board.getHex(this.x, this.y),
-    ].filter(n => n);
+    ].filter(defined);
   }
 }
 
@@ -225,7 +226,7 @@ export class Hex {
         this.board.getHex(this.x + 1, this.y - 1),
         this.board.getHex(this.x - 1, this.y + 1),
         this.board.getHex(this.x + 1, this.y + 1),
-      ].filter(n => n);
+      ].filter(defined);
     }
     return this.neighbors;
   }
@@ -239,7 +240,7 @@ export class Hex {
         this.board.getCorner(this.x, this.y + 1),
         this.board.getCorner(this.x + 1, this.y + 1),
         this.board.getCorner(this.x + 2, this.y + 1),
-      ];
+      ].filter(defined);;
     }
     return this.corners;
   }
@@ -253,7 +254,7 @@ export class Hex {
     if (this.typedPortResources === undefined) {
       const resources = this.getCorners()
           .filter(c => !!c.port && c.port.resource !== ResourceType.ANY)
-          .map(c => c.port.resource);
+          .map(c => c.port!.resource);
       this.typedPortResources = new Set(resources);
     }
     return this.typedPortResources;
@@ -263,7 +264,7 @@ export class Hex {
    * @returns The resource types of the neighboring hexes.
    */
   getNeighborResources(): ResourceType[] {
-    return this.getNeighbors().map(h => h.resource).map(r => r).filter(r => r);
+    return this.getNeighbors().map(h => h.resource).filter(defined);
   }
 
   hasCoordinate(coord: Coordinate): boolean {
@@ -282,12 +283,12 @@ export class Board {
   readonly cornerGrid: CornerGrid;
   readonly ports: ReadonlyArray<Port>;
   // Cached value for get hexes.
-  private flatHexes: ReadonlyArray<Hex>;
+  private flatHexes: ReadonlyArray<Hex>|undefined;
   // Cached value fro get mutableHexes.
-  private cachedMutableHexes: ReadonlyArray<Hex>;
-  private cachedBeaches: ReadonlyArray<Beach>;
+  private cachedMutableHexes: ReadonlyArray<Hex>|undefined;
+  private cachedBeaches: ReadonlyArray<Beach>|undefined;
   // Cached value for get corners.
-  private flatCorners: ReadonlyArray<Corner>;
+  private flatCorners: ReadonlyArray<Corner>|undefined;
   // Coordinates are serialized using serializeCoordinate().
   private requiredResourceCoordinates: Set<string>;
 
@@ -340,7 +341,7 @@ export class Board {
       for (let i = 0; i < coordinatePairs.length; i += 2) {
         const x = coordinatePairs[i];
         const y = coordinatePairs[i + 1];
-        this.getHex(x, y).resource = resourceType;
+        this.getHex(x, y)!.resource = resourceType;
       }
     }
   }
@@ -360,7 +361,7 @@ export class Board {
   }
 
   get centerHexes(): ReadonlyArray<Hex> {
-    return this.spec.centerCoords.map(coord => this.getHex(coord.x, coord.y));
+    return this.spec.centerCoords.map(coord => this.getHex(coord.x, coord.y)!);
   }
 
   get corners(): ReadonlyArray<Corner> {
@@ -528,12 +529,11 @@ export class Board {
  * Returns -1 if no such value exists.
  */
 function findFirstSetIndex(arr1: Array<any>, arr2: Array<any>|undefined): number {
-  const isSet = v => v !== undefined;
-  const index1 = arr1.findIndex(isSet);
+  const index1 = arr1.findIndex(defined);
   if (!arr2) {
     return index1;
   }
-  const index2 = arr2.findIndex(isSet);
+  const index2 = arr2.findIndex(defined);
   if (index1 === -1) {
     return index2;
   }

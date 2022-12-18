@@ -12,7 +12,7 @@ export class RandomQueue<T> {
   static getRandomInt = getRandom;
 
   vals: T[];
-  nextForPop: number = null;
+  nextForPop: number|null = null;
 
   /**
    * @param vals Initial values.
@@ -111,7 +111,7 @@ export class RandomQueue<T> {
     if (this.isEmpty()) {
       return undefined;
     }
-    this.setNextForPop();
+    this.nextForPop = RandomQueue.getRandomInt(this.vals.length);
     return this.vals[this.nextForPop];
   }
 
@@ -124,10 +124,6 @@ export class RandomQueue<T> {
     this.vals.splice(i, 1);
     this.markMutated();
     return val;
-  }
-
-  private setNextForPop() {
-    this.nextForPop = RandomQueue.getRandomInt(this.vals.length);
   }
 
   private markMutated() {

@@ -1,12 +1,27 @@
-@import '../../../material-theme.scss';
+@use 'sass:map';
+@use '@angular/material' as mat;
+@use '../../../styles.scss' as styles;
+
+$color-config: mat.get-color-config(styles.$settlers-setup-theme);
+$primary-palette: map.get($color-config, 'primary');
+
+h1 {
+  color: black;
+  font-size: 20px;
+  line-height: 20px;
+  margin: 24px;
+  margin-bottom: 0;
+  position: relative;
+}
 
 .close-button {
-  float: right;
-  margin-top: -3px;
+  position: absolute;
+  top: -18px;
+  right: -18px;
 }
 
 a {
-  color: $primary;
+  color: mat.get-color-from-palette($primary-palette, default);
 }
 
 p:first-child {

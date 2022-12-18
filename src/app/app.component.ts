@@ -5,24 +5,22 @@ import { SettlersConfig, BoardConfigComponent, FormState } from './components/bo
 import { SlidingCardComponent } from './components/sliding-card/sliding-card.component';
 import { serialize, deserialize, hasCustomPorts } from './board/board-url-serializer';
 
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 
 const BOARD_URL_REGEX = /\/board\/([a-z\dA-Z\-]+)/;
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  providers: [Location, {provide: LocationStrategy, useClass: PathLocationStrategy}]
+  providers: [Location, {provide: LocationStrategy, useClass: PathLocationStrategy}],
 })
-export class AppComponent implements OnInit {
-  title = 'settlers-setup';
-  @ViewChild('boardConfigSlider', {static: true}) boardConfigSlider: SlidingCardComponent;
-  @ViewChild('boardConfig', {static: true}) boardConfig: BoardConfigComponent;
+export class AppComponent {
+  @ViewChild('boardConfigSlider', {static: true}) boardConfigSlider!: SlidingCardComponent;
+  @ViewChild('boardConfig', {static: true}) boardConfig!: BoardConfigComponent;
 
-  config: SettlersConfig;
-  board: Board;
-  configFormState: FormState;
+  config!: SettlersConfig;
+  board!: Board;
+  configFormState!: FormState;
   boardAnimationEnabled = true;
 
   constructor(private readonly location: Location) {}

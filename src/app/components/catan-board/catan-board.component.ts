@@ -5,9 +5,7 @@ import { assert } from '../../util/assert';
 import * as bezier from 'bezier-easing';
 import { findHighestBy, findLowestBy } from 'src/app/util/collections';
 
-import clone from 'lodash/clone';
-import round from 'lodash/round';
-import shuffle from 'lodash/shuffle';
+import { clone, round, shuffle } from 'lodash';
 
 // ====== Render Sizing ======
 // Note: the "scale factor" constants are used to slow down or speed up how much the numbers are
@@ -159,22 +157,22 @@ const ROLL_NUM_ANIM_CONFIG = {
   styleUrls: ['./catan-board.component.scss']
 })
 export class CatanBoardComponent implements OnChanges {
-  @Input() board: Board;
-  @Input() animationEnabled: boolean;
-  @ViewChild('canvas', { static: true }) canvas: ElementRef;
-  @ViewChild('container', { static: true }) container: ElementRef;
+  @Input() board!: Board;
+  @Input() animationEnabled!: boolean;
+  @ViewChild('canvas', { static: true }) canvas!: ElementRef;
+  @ViewChild('container', { static: true }) container!: ElementRef;
   scope: paper.PaperScope;
-  project: paper.Project;
+  project!: paper.Project;
   // To toggle showStats add ?debug=1 to the URL.
   private showStats = !!location.search.match(/(\?|&)debug=[^&]+/);
-  private sizeAndScale: SizeAndScale;
+  private sizeAndScale!: SizeAndScale;
 
-  private hexItems: paper.Item[];
-  private rollNumItems: Array<paper.Item|null>;
-  private finalHexYs: number[];
-  private hexAnimConfig: AnimationConfig;
-  private rollNumAnimConfig: AnimationConfig;
-  private animationComplete: boolean;
+  private hexItems!: paper.Item[];
+  private rollNumItems!: Array<paper.Item|null>;
+  private finalHexYs!: number[];
+  private hexAnimConfig!: AnimationConfig;
+  private rollNumAnimConfig!: AnimationConfig;
+  private animationComplete!: boolean;
 
   constructor() {
     this.scope = new paper.PaperScope();
@@ -210,11 +208,10 @@ export class CatanBoardComponent implements OnChanges {
         this.renderHex(hex);
       }
     }
-    let prevPoints: paper.Point[];
+    let prevPoints: paper.Point[] = [];
     for (const beach of this.board.beaches) {
       try {
         if (beach.isSeafarersBeach) {
-          assert(prevPoints);
           this.renderSeafarersBeach(beach, prevPoints);
         } else {
           prevPoints = this.renderBeach(beach);
@@ -251,8 +248,8 @@ export class CatanBoardComponent implements OnChanges {
     }
 
     if (this.showStats) {
-      const bestCorner = findHighestBy(this.board.corners, c => c.score);
-      const worstCorner = findLowestBy(this.board.corners, c => c.score);
+      const bestCorner = findHighestBy(this.board.corners, c => c.score!);
+      const worstCorner = findLowestBy(this.board.corners, c => c.score!);
 
       for (const corner of this.board.corners) {
         this.renderCorner(corner, bestCorner === corner, worstCorner === corner);
@@ -308,7 +305,7 @@ export class CatanBoardComponent implements OnChanges {
     group.addChild(path);
 
     if (this.showStats) {
-      const score = this.renderText(round(hex.score, 1) + '',
+      const score = this.renderText(round(hex.score!, 1) + '',
           new paper.Point(HEX_DIMS.width /  2 * scale, 18 * scale));
       group.addChild(score);
     }
@@ -385,7 +382,7 @@ export class CatanBoardComponent implements OnChanges {
     }
     group.addChild(circle);
 
-    const text = this.renderText(round(corner.score, 1) + '',
+    const text = this.renderText(round(corner.score!, 1) + '',
                                  point, {color: 'white', size: 8});
     group.addChild(text);
 
@@ -497,7 +494,7 @@ export class CatanBoardComponent implements OnChanges {
     }
   }
 
-  private renderBeachPath(points: paper.Point[], gradientStart, gradientEnd): paper.Path {
+  private renderBeachPath(points: paper.Point[], gradientStart: paper.PointLike, gradientEnd: paper.PointLike): paper.Path {
     const scale = this.adjustScale(BEACH_SCALE_FACTOR);
     const path = new paper.Path(points);
     {
@@ -572,6 +569,7 @@ export class CatanBoardComponent implements OnChanges {
 
   private renderDragons() {
     const dragonCoordinates = this.board.spec.dragons;
+    if (!dragonCoordinates) return;
     for (let i = 0; i < dragonCoordinates.length; i += 2) {
       this.renderDragon({x: dragonCoordinates[i], y: dragonCoordinates[i + 1]});
     }
@@ -633,7 +631,7 @@ export class CatanBoardComponent implements OnChanges {
       this.animateItem(event.time, this.rollNumItems[i], i, finalY, this.rollNumAnimConfig);
     }
 
-    if (event.time > this.rollNumAnimConfig.totalDuration) {
+    if (event.time > (this.rollNumAnimConfig.totalDuration ?? 0)) {
       this.animationComplete = true;
     }
   }
@@ -653,7 +651,7 @@ export class CatanBoardComponent implements OnChanges {
   private calculateTotalDuration(config: AnimationConfig) {
     assert(config.startTime !== undefined);
     config.totalDuration =
-        config.startTime + config.duration + config.offsetDuration * this.hexItems.length;
+        config.startTime! + config.duration + config.offsetDuration * this.hexItems.length;
   }
 
   private adjustScale(factor: number): number {

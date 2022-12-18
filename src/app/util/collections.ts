@@ -33,7 +33,7 @@ export function findLowestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => numb
 }
 
 export function findAllLowestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => number): T[]|undefined {
-  let lowestVals;
+  let lowestVals: T[] = [];
   let lowestNum = Number.MAX_VALUE;
   for (const val of collection) {
     const score = fn(val);
@@ -61,7 +61,7 @@ export function findHighestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => num
 }
 
 export function findAllHighestBy<T>(collection: ReadonlyArray<T>, fn: (v: T) => number): T[]|undefined {
-  let highestVals;
+  let highestVals: T[] = [];
   let highestNum = -1;
   for (const val of collection) {
     const score = fn(val);
@@ -83,4 +83,11 @@ export function countMatches<T>(collection: ReadonlyArray<T>, fn: (v: T) => bool
     }
   }
   return i;
+}
+
+/**
+ * Use this in conjuction with .filter() on an array.
+ */
+export function defined<T>(val: T|null|undefined): val is T {
+  return val !== null && val !== undefined;
 }
