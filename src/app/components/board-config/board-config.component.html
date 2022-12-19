@@ -18,11 +18,16 @@
                       formControlName="resourceDistribution"></app-config-slider>
   </div>
 
+  <app-config-slider label="Number Distribution"
+                     minLabel="Greedy"
+                     maxLabel="Fair"
+                     formControlName="numberDistribution"></app-config-slider>
+
   <div class="checkbox" [style.display]="hasDefaultPorts ? '' : 'none'">
     <mat-checkbox formControlName="shufflePorts">Shuffle ports</mat-checkbox>
   </div>
   <div class="checkbox">
-    <mat-checkbox formControlName="allowResourceOnPort">Allow same resource as port</mat-checkbox>
+    <mat-checkbox formControlName="allowResourceOnPort" [checked]="true">Allow same resource as port</mat-checkbox>
   </div>
 
   <div id="submit-box">

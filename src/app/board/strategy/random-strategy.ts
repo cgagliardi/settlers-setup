@@ -7,7 +7,7 @@ export class RandomStrategy implements Strategy {
 
   constructor(private readonly options: StrategyOptions) {}
 
-  generateBoard(spec: BoardSpec): Board {
+  generateBoard(spec: BoardSpec): { board: Board, score: number } {
     const board = new Board(spec);
     board.reset();
     if (this.options.shufflePorts) {
@@ -38,6 +38,6 @@ export class RandomStrategy implements Strategy {
         hex.resource = ResourceType.WATER;
       }
     }
-    return board;
+    return { board!, score: 0 };
   }
 }

@@ -20,6 +20,9 @@ export interface StrategyOptions {
   // 0.5 - random
   // 1 - resources are evenly distrubted.
   resourceDistribution: number;
+  // 0 - good numbers are grouped together
+  // 1 - each board corner is as close in value to others as possible
+  numberDistribution: number;
   shufflePorts: boolean;
   // Allow a resource hex to be placed next to a port of the same type.
   allowResourceOnPort: boolean;
@@ -30,7 +33,7 @@ export interface StrategyOptions {
  */
 export interface Strategy {
   readonly name: string;
-  generateBoard: (spec: BoardSpec) => Board;
+  generateBoard: (spec: BoardSpec) => { board: Board, score: number };
 }
 
 export type StrategyConstructor = new (options: StrategyOptions) => Strategy;

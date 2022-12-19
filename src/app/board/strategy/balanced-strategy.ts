@@ -2,9 +2,9 @@ import { Board, BoardSpec, ResourceType, Hex, getNumDots, STANDARD_RESOURCES, Co
 import { Strategy, StrategyOptions, DesertPlacement, ResourceDistribution, shufflePorts } from './strategy';
 import { assert } from 'src/app/util/assert';
 import { RandomQueue } from '../random-queue';
-import { findAllLowestBy, hasAll, sumByKey, findHighestBy, countMatches } from 'src/app/util/collections';
+import { findAllLowestBy, hasAll, sumByKey, findHighestBy, countMatches, findAllHighestBy } from 'src/app/util/collections';
 
-import { mean, pull, round, sample, sortBy, sum, sumBy } from 'lodash-es';
+import { mean, pull, round, sample, sortBy, sum, sumBy, countBy } from 'lodash-es';
 import { BoardShape } from '../specs/shapes-enum';
 
 // When generating a board, several boards are generated, returning the best one. The number of
@@ -23,6 +23,25 @@ const FIRST_MIN_TIME = 400;
 const HEX_CORNER_POWER = 6;
 
 let firstGenerated = false;
+
+enum NumberPlacement {
+  GREEDY = 0,
+  FAIR = 1,
+}
+
+/**
+ * These values allow us to generate boards with a specific numberDistribution.
+ * Any time the algorithm is modified or new boards are added, this should be updated
+ * with new values. To generate this list, call calculateStrategyScores() from
+ * the browser console.
+ */
+const SCORE_RANGES = {
+  [BoardShape.STANDARD]: { greedy: 13.014067729766802, fair: 5.893507115912209 },
+  [BoardShape.EXPANSION6]: { greedy: 15.854644082031252, fair: 5.459049609374999 },
+  [BoardShape.SEAFARERS1]: { greedy: 22.19497916666667, fair: 7.765675357938958 },
+  [BoardShape.SEAFARERS2]: { greedy: 16.912793885030865, fair: 11.232163108710564 },
+  [BoardShape.DRAGONS]: { greedy: 22.21849821428571, fair: 11.630966830357144 },
+};
 
 function createRandomQueueByPercent<T>(
       percent: number, size: number, lowValue: T, highValue: T): RandomQueue<T> {
@@ -48,10 +67,12 @@ export class BalancedStrategy implements Strategy {
   private remainingResources!: RandomQueue<ResourceType>;
   private board!: Board;
   private initialResources!: RandomQueue<ResourceType>;
+  private targetScore!: number;
 
   constructor(readonly options: StrategyOptions) {}
 
-  generateBoard(spec: BoardSpec): Board {
+  generateBoard(spec: BoardSpec): { board: Board, score: number } {
+    this.targetScore = this.calculateTargetScore(spec);
     // Because we randomly generate N boards and pick the best one, the scoring can bias towards a
     // specific desert placement. To counteract this, we decide the desert placement up front.
     this.desertPlacement = this.chooseDesertPlacement(spec);
@@ -59,7 +80,7 @@ export class BalancedStrategy implements Strategy {
     // Each board is randomly generated with a best effort. We generate several boards and return
     // the best one.
     let bestBoard: Board;
-    let bestBoardScore = Number.MAX_VALUE;
+    let bestBoardScore: number|null = null;
     let bestBoardScoreStats;
     const startTime = Date.now();
     const minTime = firstGenerated ? MIN_TIME : FIRST_MIN_TIME;
@@ -74,18 +95,21 @@ export class BalancedStrategy implements Strategy {
       }
     }
     console.log('num boards generated: ' + i);
+    console.log('Target score: ' + this.targetScore);
     console.log('Board score: ' + bestBoardScore);
     console.log(bestBoardScoreStats);
 
     firstGenerated = true;
-    return bestBoard!;
+    return { board: bestBoard!, score: bestBoardScore! };
   }
 
   private isBetterScore(previous: number|null, next: number): boolean {
     if (previous === null) {
       return true;
     }
-    return next < previous;
+    const previousDistance = Math.abs(previous - this.targetScore);
+    const nextDistance = Math.abs(next - this.targetScore);
+    return nextDistance < previousDistance;
   }
 
   /**
@@ -142,14 +166,17 @@ export class BalancedStrategy implements Strategy {
     }
 
     let resource;
+    const numberStrategies = createRandomQueueByPercent(
+        this.options.numberDistribution, this.remainingHexes.length,
+        NumberPlacement.GREEDY, NumberPlacement.FAIR);
     // tslint:disable-next-line:no-conditional-assignment
     while (resource = this.initialResources.pop()) {
-      this.placeNumber(resource);
+      this.placeNumber(numberStrategies.pop()!, resource);
     }
 
     // Place the remaining roll numbers until there are none left.
     while (this.remainingHexes.length) {
-      this.placeNumber();
+      this.placeNumber(numberStrategies.pop()!);
     }
 
     return board;
@@ -321,7 +348,7 @@ export class BalancedStrategy implements Strategy {
    * Scores every corner and every hex of the board, then places the highest available number of the
    * lowest valued hex.
    */
-  private placeNumber(resourceType: null|ResourceType = null) {
+  private placeNumber(numberStrategy: NumberPlacement, resourceType: null|ResourceType = null) {
     this.scoreHexesAndCorners();
 
     let potentialHexes = this.remainingHexes;
@@ -329,7 +356,11 @@ export class BalancedStrategy implements Strategy {
       potentialHexes = potentialHexes.filter(h => h.resource === resourceType);
     }
 
-    potentialHexes = findAllLowestBy(potentialHexes, h => h.score!)!;
+    if (numberStrategy === NumberPlacement.FAIR) {
+      potentialHexes = findAllLowestBy(potentialHexes, h => h.score!)!;
+    } else {
+      potentialHexes = findAllHighestBy(potentialHexes, h => h.score!)!;
+    }
     const hex = sample(potentialHexes)!;
     pull(this.remainingHexes, hex);
 
@@ -444,6 +475,23 @@ export class BalancedStrategy implements Strategy {
       }
     } else {
       return this.options.desertPlacement;
+    }
+  }
+
+  private calculateTargetScore(spec: BoardSpec): number {
+    switch (this.options.numberDistribution) {
+      case 1:
+        return Number.MAX_VALUE;
+      case 0:
+        return 0;
+      default:
+        const range = SCORE_RANGES[spec.shape];
+        if (!range) {
+          console.error(`score range missing for "${spec.shape}"`);
+          return 0.5;
+        }
+        return (1 - this.options.numberDistribution) *
+            (range.greedy - range.fair) + range.fair;
     }
   }
 }

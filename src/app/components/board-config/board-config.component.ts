@@ -11,6 +11,7 @@ export interface FormState {
   boardShape: BoardShape;
   desertPlacement: DesertPlacement;
   resourceDistribution: number;
+  numberDistribution: number;
   shufflePorts: boolean;
   allowResourceOnPort: boolean;
 }
@@ -75,8 +76,9 @@ export class BoardConfigComponent {
     boardShape: this.boardShapes[0].value,
     desertPlacement: this.desertPlacements[0].value,
     resourceDistribution: CONFIG_SLIDER_MAX_VALUE,
+    numberDistribution: Math.floor(CONFIG_SLIDER_MAX_VALUE * 0.85),
     shufflePorts: false,
-    allowResourceOnPort: false,
+    allowResourceOnPort: true,
   });
 
   @Output() configUpdate = new EventEmitter<SettlersConfig>();
@@ -138,6 +140,7 @@ export class BoardConfigComponent {
           resourceDistribution:
               this.resourceDistributionEnabled ?
               state.resourceDistribution / CONFIG_SLIDER_MAX_VALUE : 1,
+          numberDistribution: state.numberDistribution / CONFIG_SLIDER_MAX_VALUE,
           shufflePorts: this.hasDefaultPorts ? state.shufflePorts : true,
           allowResourceOnPort: state.allowResourceOnPort,
         });

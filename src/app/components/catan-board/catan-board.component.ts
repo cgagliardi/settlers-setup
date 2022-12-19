@@ -74,13 +74,13 @@ function getGradientColors(resource: ResourceType): string[] {
     case ResourceType.DESERT:
       return ['#8F6455', '#795548', '#5D4037'];
     case ResourceType.GOLD:
-        return ['#EF6C00', '#FFB300', '#FFA000', '#FFCA28'];
+      return ['#EF6C00', '#FFB300', '#FFA000', '#FFCA28'];
     case ResourceType.ORE:
       return ['#CFD8DC', '#B0BEC5', '#90A4AE'];
     case ResourceType.SHEEP:
       return ['#BCFF6B', '#B2FF59', '#9EE34F'];
     case ResourceType.WATER:
-        return WATER_COLORS;
+      return WATER_COLORS;
     case ResourceType.WHEAT:
       return ['#FFF176', '#FFEE58', '#FFEB3B'];
     case ResourceType.WOOD:
@@ -95,7 +95,7 @@ function getGradientColors(resource: ResourceType): string[] {
 function createGradient(colors: string[]): paper.Gradient {
   const gradient = new paper.Gradient();
   gradient.stops = colors.map((c, i) =>
-      new paper.GradientStop(new paper.Color(c), i / colors.length));
+    new paper.GradientStop(new paper.Color(c), i / colors.length));
   return gradient;
 }
 
@@ -168,7 +168,7 @@ export class CatanBoardComponent implements OnChanges {
   private sizeAndScale!: SizeAndScale;
 
   private hexItems!: paper.Item[];
-  private rollNumItems!: Array<paper.Item|null>;
+  private rollNumItems!: Array<paper.Item | null>;
   private finalHexYs!: number[];
   private hexAnimConfig!: AnimationConfig;
   private rollNumAnimConfig!: AnimationConfig;
@@ -248,18 +248,13 @@ export class CatanBoardComponent implements OnChanges {
     }
 
     if (this.showStats) {
-      const bestCorner = findHighestBy(this.board.corners, c => c.score!);
-      const worstCorner = findLowestBy(this.board.corners, c => c.score!);
-
-      for (const corner of this.board.corners) {
-        this.renderCorner(corner, bestCorner === corner, worstCorner === corner);
-      }
+      this.renderCorners();
     }
 
     if (animate) {
       this.configureAnimation();
     } else {
-      this.project.view.onFrame = () => {};
+      this.project.view.onFrame = () => { };
     }
   }
 
@@ -267,11 +262,11 @@ export class CatanBoardComponent implements OnChanges {
     const dims = this.board.dimensions;
     const fullWidth = dims.width * HEX_DIMS.width + BOARD_OFFSET.x * 2;
     const fullHeight = dims.height * (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT)
-        + HEX_CORNER_HEIGHT + BOARD_OFFSET.y * 2;
+      + HEX_CORNER_HEIGHT + BOARD_OFFSET.y * 2;
 
     const containerWidth = this.container.nativeElement.clientWidth;
     const ratio = containerWidth >= fullWidth ? 1 :
-        containerWidth / fullWidth;
+      containerWidth / fullWidth;
     return {
       width: fullWidth * ratio,
       height: fullHeight * ratio,
@@ -279,7 +274,7 @@ export class CatanBoardComponent implements OnChanges {
     };
   }
 
-  private renderHex(hex: Hex): [paper.Item, paper.Item|null] {
+  private renderHex(hex: Hex): [paper.Item, paper.Item | null] {
     if (!hex.resource) {
       return [new paper.Group(), null];
     }
@@ -287,18 +282,18 @@ export class CatanBoardComponent implements OnChanges {
     const group = new paper.Group();
 
     const path = new paper.Path(toPoints([
-        0, HEX_CORNER_HEIGHT * scale, // NW
-        HEX_DIMS.width / 2 * scale, 0, // N
-        HEX_DIMS.width * scale, HEX_CORNER_HEIGHT * scale,  /// NE
-        HEX_DIMS.width * scale, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale,  // SE
-        HEX_DIMS.width / 2 * scale, HEX_DIMS.height * scale,  // S
-        0, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale,  // SW
-        0, HEX_CORNER_HEIGHT * scale, // NW
+      0, HEX_CORNER_HEIGHT * scale, // NW
+      HEX_DIMS.width / 2 * scale, 0, // N
+      HEX_DIMS.width * scale, HEX_CORNER_HEIGHT * scale,  /// NE
+      HEX_DIMS.width * scale, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale,  // SE
+      HEX_DIMS.width / 2 * scale, HEX_DIMS.height * scale,  // S
+      0, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale,  // SW
+      0, HEX_CORNER_HEIGHT * scale, // NW
     ]));
     path.fillColor = new paper.Color(
-        getGradient(hex.resource),
-        new paper.Point(0, HEX_CORNER_HEIGHT * scale),
-        new paper.Point(HEX_DIMS.width * scale, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale));
+      getGradient(hex.resource),
+      new paper.Point(0, HEX_CORNER_HEIGHT * scale),
+      new paper.Point(HEX_DIMS.width * scale, (HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * scale));
     path.strokeColor = new paper.Color('black');
     path.strokeWidth = 1;
 
@@ -306,14 +301,14 @@ export class CatanBoardComponent implements OnChanges {
 
     if (this.showStats) {
       const score = this.renderText(round(hex.score!, 1) + '',
-          new paper.Point(HEX_DIMS.width /  2 * scale, 18 * scale));
+        new paper.Point(HEX_DIMS.width / 2 * scale, 18 * scale));
       group.addChild(score);
     }
 
     group.position = new paper.Point(
       (HEX_DIMS.width / 2 * hex.x + BOARD_OFFSET.x + HEX_DIMS.width / 2) * scale,
       ((HEX_CORNER_HEIGHT + HEX_SIDE_HEIGHT) * hex.y + BOARD_OFFSET.y + HEX_DIMS.height / 2)
-          * scale);
+      * scale);
 
     // rollNumItem is not attatched to the group so that it can be animated separately.
     let rollNumItem = null;
@@ -324,7 +319,7 @@ export class CatanBoardComponent implements OnChanges {
 
     if (this.showStats) {
       group.onClick = () => {
-        const details = {x: hex.x, y: hex.y, score: hex.score};
+        const details = { x: hex.x, y: hex.y, score: hex.score };
         console.log('Hex', details);
       };
     }
@@ -346,7 +341,7 @@ export class CatanBoardComponent implements OnChanges {
     group.addChild(circle);
 
     const text = this.renderText(rollNum + '', new paper.Point(0, -2),
-                                 { color, size: 20, bold: true, scale });
+      { color, size: 20, bold: true, scale });
     group.addChild(text);
 
     const dotsGroup = new paper.Group();
@@ -366,31 +361,43 @@ export class CatanBoardComponent implements OnChanges {
   /**
    * Renders the score at a corner. This is only used for debugging.
    */
-  private renderCorner(corner: Corner, isBest: boolean, isWorst: boolean): paper.Group {
+  private renderCorners() {
+    const corners = this.board.corners.slice();
+    corners.sort((a, b) => b.score! - a.score!);
+  
     const scale = this.sizeAndScale.scale;
-    const group = new paper.Group();
 
-    const point = this.getCornerPoint(corner);
-    const circle = new paper.Path.Circle(point, 10 * scale);
+    for (const corner of corners) {
+      const group = new paper.Group();
 
-    if (isBest) {
-      circle.fillColor = new paper.Color('green');
-    } else if (isWorst) {
-      circle.fillColor = new paper.Color('red');
-    } else {
-      circle.fillColor = new paper.Color('black');
+      const point = this.getCornerPoint(corner);
+      const circle = new paper.Path.Circle(point, 10 * scale);
+
+      switch (corner) {
+        // best
+        case corners[0]:
+          circle.fillColor = new paper.Color('#0ba600');
+          break;
+        // second best
+        case corners[1]: 
+          circle.fillColor = new paper.Color('#a3a303');
+          break;
+        case corners[corners.length - 1]:
+          circle.fillColor = new paper.Color('red');
+          break;
+        default:
+          circle.fillColor = new paper.Color('black');
+      }
+      group.addChild(circle);
+
+      const text = this.renderText(round(corner.score!, 1) + '',
+      point, { color: 'white', size: 8 });
+      group.addChild(text);
+
+      group.onClick = () => {
+        console.log(corner);
+      };
     }
-    group.addChild(circle);
-
-    const text = this.renderText(round(corner.score!, 1) + '',
-                                 point, {color: 'white', size: 8});
-    group.addChild(text);
-
-    group.onClick = () => {
-      console.log(corner);
-    };
-
-    return group;
   }
 
   private renderBeach(beach: Beach): paper.Point[] {
@@ -400,15 +407,15 @@ export class CatanBoardComponent implements OnChanges {
     const points = innerPoints.slice();
 
     const outerRight =
-        getPointFromLine(points[points.length - 1], points[points.length - 2], -60,
-          BEACH_DISTANCE * scale);
+      getPointFromLine(points[points.length - 1], points[points.length - 2], -60,
+        BEACH_DISTANCE * scale);
     const farPointRight =
-        getPointFromLine(outerRight, points[points.length - 1], -90, BEACH_DISTANCE * 100 * scale);
+      getPointFromLine(outerRight, points[points.length - 1], -90, BEACH_DISTANCE * 100 * scale);
     const rightPath = new paper.Path([outerRight, farPointRight]);
 
     const outerLeft = getPointFromLine(points[0], points[1], 60, BEACH_DISTANCE * scale);
     const farLeftPoint =
-        getPointFromLine(outerLeft, points[0], 90, BEACH_DISTANCE * 100 * scale);
+      getPointFromLine(outerLeft, points[0], 90, BEACH_DISTANCE * 100 * scale);
     const leftPath = new paper.Path([outerLeft, farLeftPoint]);
 
     // Math is hard.
@@ -434,7 +441,7 @@ export class CatanBoardComponent implements OnChanges {
     let point = average(beachPoint, outerPoint);
     point = getPointFromLine(point, outerPoint, first ? -90 : 90, BEACH_NUMBER_DISTANCE * scale);
     const textScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
-    this.renderText(value + '', point, {bold: true, scale: textScale});
+    this.renderText(value + '', point, { bold: true, scale: textScale });
   }
 
   /**
@@ -455,8 +462,8 @@ export class CatanBoardComponent implements OnChanges {
     const points = innerPoints.slice();
 
     const outerRight =
-        getPointFromLine(points[points.length - 1], points[points.length - 2], -60,
-          BEACH_DISTANCE * scale);
+      getPointFromLine(points[points.length - 1], points[points.length - 2], -60,
+        BEACH_DISTANCE * scale);
     const outerLeft = getPointFromLine(points[0], points[1], 60, HEX_SIDE_HEIGHT * scale);
     // Sadly I can't figure out a good way to calculate where this point belongs. In renderBeach()
     // it's generated through some elaborate geometry. Instead of doing something more elegant, I'm
@@ -464,7 +471,7 @@ export class CatanBoardComponent implements OnChanges {
     const verticalBottom = prevBeachPoints[prevBeachPoints.length - 2];
 
     const farPointRight =
-        getPointFromLine(outerRight, points[points.length - 1], -90, BEACH_DISTANCE * 100 * scale);
+      getPointFromLine(outerRight, points[points.length - 1], -90, BEACH_DISTANCE * 100 * scale);
     const rightPath = new paper.Path([outerRight, farPointRight]);
     const farLeftPoint = verticalBottom.clone();
     // The most outer line is vertical, so just draw a vertical line from verticalBottom.
@@ -512,7 +519,7 @@ export class CatanBoardComponent implements OnChanges {
     const portPoints = port.corners.map(c => this.getCornerPoint(c));
 
     const labelPoint = getPointFromLine(
-        average(portPoints[0], portPoints[1]), portPoints[1], 90, PORT_DISTANCE * scale);
+      average(portPoints[0], portPoints[1]), portPoints[1], 90, PORT_DISTANCE * scale);
     const labelScale = this.adjustScale(BEACH_TEXT_SCALE_FACTOR);
 
     // Create lines from label to hex
@@ -527,27 +534,27 @@ export class CatanBoardComponent implements OnChanges {
     const radius = PORT_BACKGROUND_RADIUS * labelScale;
     const circle = new paper.Shape.Circle(labelPoint, radius);
     circle.fillColor =
-        new paper.Color(
-          getGradient(port.resource),
-          labelPoint.subtract(radius), labelPoint.add(radius));
+      new paper.Color(
+        getGradient(port.resource),
+        labelPoint.subtract(radius), labelPoint.add(radius));
     circle.shadowColor = new paper.Color(0, 0.8);
     circle.shadowOffset = new paper.Point(0.4 * labelScale, 0.4 * labelScale);
     circle.shadowBlur = 3 * labelScale;
 
     // Create label text.
     const color = port.resource === ResourceType.ANY ? 'white' : 'black';
-    const text  = port.resource === ResourceType.ANY ? '?' : port.resource.substr(0, 2);
+    const text = port.resource === ResourceType.ANY ? '?' : port.resource.substr(0, 2);
     const label = this.renderText(text,
-      labelPoint.subtract(new paper.Point(0, 1).multiply(labelScale)), {color, scale: labelScale});
+      labelPoint.subtract(new paper.Point(0, 1).multiply(labelScale)), { color, scale: labelScale });
   }
 
   private getCornerPoint(corner: Coordinate): paper.Point {
     const scale = this.sizeAndScale.scale;
     const xFactor = (corner.x + corner.y + this.board.dimensions.width + 1) % 2 ?
-        0 : HEX_CORNER_HEIGHT;
+      0 : HEX_CORNER_HEIGHT;
     return new paper.Point(
-        (corner.x * HEX_DIMS.width / 2 + BOARD_OFFSET.x) * scale,
-        (corner.y * (HEX_SIDE_HEIGHT + HEX_CORNER_HEIGHT) + xFactor + BOARD_OFFSET.y) * scale);
+      (corner.x * HEX_DIMS.width / 2 + BOARD_OFFSET.x) * scale,
+      (corner.y * (HEX_SIDE_HEIGHT + HEX_CORNER_HEIGHT) + xFactor + BOARD_OFFSET.y) * scale);
   }
 
   // Renders text centered over a point.
@@ -571,7 +578,7 @@ export class CatanBoardComponent implements OnChanges {
     const dragonCoordinates = this.board.spec.dragons;
     if (!dragonCoordinates) return;
     for (let i = 0; i < dragonCoordinates.length; i += 2) {
-      this.renderDragon({x: dragonCoordinates[i], y: dragonCoordinates[i + 1]});
+      this.renderDragon({ x: dragonCoordinates[i], y: dragonCoordinates[i + 1] });
     }
   }
 
@@ -590,7 +597,7 @@ export class CatanBoardComponent implements OnChanges {
     const textPoint = point.clone();
     textPoint.x += 1;
     textPoint.y += -2;
-    const text = this.renderText('🐉', textPoint, {size: 14});
+    const text = this.renderText('🐉', textPoint, { size: 14 });
     group.addChild(text);
   }
 
@@ -610,17 +617,17 @@ export class CatanBoardComponent implements OnChanges {
     this.rollNumAnimConfig = clone(ROLL_NUM_ANIM_CONFIG);
     // Start the rollNum animtions part of the way through the hex animations.
     this.rollNumAnimConfig.startTime =
-        this.hexAnimConfig.startTime +
-        this.hexAnimConfig.offsetDuration * this.hexItems.length * 0.6;
+      this.hexAnimConfig.startTime +
+      this.hexAnimConfig.offsetDuration * this.hexItems.length * 0.6;
     this.calculateTotalDuration(this.rollNumAnimConfig);
 
     this.project.view.onFrame = this.handleFrame.bind(this);
-    this.handleFrame({count: 0, time: 0, delta: 0});
+    this.handleFrame({ count: 0, time: 0, delta: 0 });
 
     firstRenderComplete = true;
   }
 
-  private handleFrame(event: {count: number, time: number, delta: number}) {
+  private handleFrame(event: { count: number, time: number, delta: number }) {
     if (this.animationComplete) {
       return;
     }
@@ -636,12 +643,12 @@ export class CatanBoardComponent implements OnChanges {
     }
   }
 
-  private animateItem(frameTime: number, item: paper.Item|null, index: number, finalY: number,
-                      config: AnimationConfig) {
+  private animateItem(frameTime: number, item: paper.Item | null, index: number, finalY: number,
+    config: AnimationConfig) {
     if (!item) {
       return;
     }
-    const initialTime =  index * config.offsetDuration + (config.startTime || 0);
+    const initialTime = index * config.offsetDuration + (config.startTime || 0);
     const animPerc = Math.max(0, Math.min((frameTime - initialTime) / config.duration, 1));
     const animEased = easeOut(animPerc);
     item.opacity = config.animateOpacity ? animEased : (animPerc ? 1 : 0);
@@ -651,7 +658,7 @@ export class CatanBoardComponent implements OnChanges {
   private calculateTotalDuration(config: AnimationConfig) {
     assert(config.startTime !== undefined);
     config.totalDuration =
-        config.startTime! + config.duration + config.offsetDuration * this.hexItems.length;
+      config.startTime! + config.duration + config.offsetDuration * this.hexItems.length;
   }
 
   private adjustScale(factor: number): number {

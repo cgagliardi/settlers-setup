@@ -6,6 +6,7 @@ import { SlidingCardComponent } from './components/sliding-card/sliding-card.com
 import { serialize, deserialize, hasCustomPorts } from './board/board-url-serializer';
 
 import { isEqual } from 'lodash-es';
+import { calculateStrategyScores } from 'tools/balanced-distribution-calculator';
 
 const BOARD_URL_REGEX = /\/board\/([a-z\dA-Z\-]+)/;
 @Component({
@@ -23,7 +24,9 @@ export class AppComponent {
   configFormState!: FormState;
   boardAnimationEnabled = true;
 
-  constructor(private readonly location: Location) {}
+  constructor(private readonly location: Location) {
+    (window as any)['calculateStrategyScores'] = calculateStrategyScores;
+  }
 
   ngOnInit() {
     this.saveConfig(this.boardConfig.getConfig());
@@ -62,7 +65,8 @@ export class AppComponent {
   generateBoard() {
     this.boardAnimationEnabled = true;
     const firstRender = !this.board;
-    this.board = this.config.strategy.generateBoard(this.config.spec);
+    const { board } = this.config.strategy.generateBoard(this.config.spec);
+    this.board = board;
     const newPath = '/board/' + serialize(this.board);
     const newUrl = newPath + window.location.search + window.location.hash;
     if (firstRender) {
